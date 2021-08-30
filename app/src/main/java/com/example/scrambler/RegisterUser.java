@@ -106,7 +106,7 @@ public class RegisterUser extends AppCompatActivity implements View.OnClickListe
                                         Toast.makeText(RegisterUser.this, "User has been registered successfully!", Toast.LENGTH_LONG).show();
                                         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
                                         String userID = firebaseUser.getUid();
-                                        user.setUUID(userID);
+                                        user.setUuid(userID);
                                     }else{
                                         Toast.makeText(RegisterUser.this, "Failed to register! Try again!", Toast.LENGTH_LONG).show();
                                     }
