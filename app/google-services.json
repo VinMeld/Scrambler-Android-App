@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "444096158404",
+    "project_id": "scrambler-app-ef9eb",
+    "storage_bucket": "scrambler-app-ef9eb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:444096158404:android:b868cc1d1e602c82448791",
+        "android_client_info": {
+          "package_name": "com.example.scrambler"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "444096158404-mhbghhg5irpbbgs3shsph93sasjp8meg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsbVgPUEeDk0ksNk5VNTlX7yinq36-bek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "444096158404-mhbghhg5irpbbgs3shsph93sasjp8meg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
