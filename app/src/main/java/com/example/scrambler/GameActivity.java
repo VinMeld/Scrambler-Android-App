@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -18,96 +19,92 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+
 public class GameActivity extends AppCompatActivity {
+    private static final String TAG = "MyActivity";
     String word = "";
     int correct = 0;
     int chances = 3;
-    // int seconds = 0;
-    // TimerTask task;
+    int seconds = 1;
+    boolean restart = false;
+    TimerTask task;
+
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_game);
-            Button menu = findViewById(R.id.buttonMenu);
-            TextView correctWords = findViewById(R.id.textViewCorrect);
-            TextView scrambledWord = findViewById(R.id.textWord);
-            EditText enterScramble = findViewById(R.id.textViewWord);
-            TextView textViewChances = findViewById(R.id.textViewChances);
-            Button buttonRestart = findViewById(R.id.buttonRestart);
-            correctWords.setText(String.valueOf(correct));
-            textViewChances.setText(String.valueOf(chances));
-//            while (chances > 0) {
-//                task = new TimerTask() {
-//                    @Override
-//                    public void run() {
-//                        int MAX_SECONDS = 15;
-//                        if (seconds < MAX_SECONDS) {
-//                            seconds++;
-//                        } else {
-//                            if (chances == 1) {
-//                                scrambledWord.setText("You lose. Go back to menu!");
-//                                enterScramble.setVisibility(View.INVISIBLE);
-//                            }
-//                            seconds = 0;
-//                            chances--;
-//                            word = setScrambledWord(scrambledWord);
-//                            textViewChances.setText(String.valueOf(chances));
-//                            cancel();
-//                        }
-//                    }
-//                };
-//            }
-            buttonRestart.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
+        setContentView(R.layout.activity_game);
+        Button menu = findViewById(R.id.buttonMenu);
+        TextView correctWords = findViewById(R.id.textViewCorrect);
+        TextView scrambledWord = findViewById(R.id.textWord);
+        EditText enterScramble = findViewById(R.id.textViewWord);
+        TextView textViewChances = findViewById(R.id.textViewChances);
+        Button buttonRestart = findViewById(R.id.buttonRestart);
+        correctWords.setText(String.valueOf(correct));
+        textViewChances.setText(String.valueOf(chances));
+        TextView timerText = findViewById(R.id.textViewTimer);
+
+        startGame(scrambledWord, enterScramble, textViewChances, timerText);
+        word = setScrambledWord(scrambledWord);
+        // RESTART BUTTON
+        buttonRestart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(chances > 0){
+                    Toast toast = Toast.makeText(getApplicationContext(), "Keep trying! You're not done yet", Toast. LENGTH_SHORT);
+                    toast.show();
+                } else {
                     chances = 3;
                     correct = 0;
                     correctWords.setText(String.valueOf(correct));
                     textViewChances.setText(String.valueOf(chances));
                     enterScramble.setVisibility(View.VISIBLE);
-                    // startGame(scrambledWord, enterScramble, textViewChances);
+                    scrambledWord.setVisibility(View.VISIBLE);
+                    word = setScrambledWord(scrambledWord);
+                    startGame(scrambledWord, enterScramble, textViewChances, timerText);
                 }
-            });
-            menu.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(GameActivity.this, MenuActivity.class));
-                }
-            });
-            enterScramble.setOnKeyListener(new View.OnKeyListener() {
-                @Override
-                public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                    System.out.println(enterScramble.getText());
-                    System.out.println(scrambledWord.getText());
-                    if (String.valueOf(enterScramble.getText()).contentEquals(word)){
-                        correct++;
-                        correctWords.setText(String.valueOf(correct));
-                        enterScramble.setText("");
-                        word = setScrambledWord(scrambledWord);
-                    }
-                    return false;
-                }
-            });
+            }
+        });
+        // MENU
+        menu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(GameActivity.this, MenuActivity.class));
+            }
+        });
+        // CHECK IF TYPED CORRECTLY
+        enterScramble.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                // IF ANSWER IS CORRECT
+                if (String.valueOf(enterScramble.getText()).contentEquals(word)) {
+                    seconds = 1;
+                    correct++;
+                    correctWords.setText(String.valueOf(correct));
+                    enterScramble.setText("");
+                    word = setScrambledWord(scrambledWord);
 
-        }
-    protected int randomNumber(int low, int high){
-        Random r = new Random();
-        return r.nextInt(high-low) + low;
+                }
+                return false;
+            }
+        });
+
     }
 
-    protected String setScrambledWord(TextView scrambledWord){
-        int wordNumber = randomNumber(1,1000);
+    protected int randomNumber(int low, int high) {
+        Random r = new Random();
+        return r.nextInt(high - low) + low;
+    }
+
+    protected String setScrambledWord(TextView scrambledWord) {
+        int wordNumber = randomNumber(1, 1000);
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="https://most-common-words.herokuapp.com/api/search?top=" +
+        String url = "https://most-common-words.herokuapp.com/api/search?top=" +
                 wordNumber;
 
         // Request a string response from the provided URL.
@@ -118,9 +115,8 @@ public class GameActivity extends AppCompatActivity {
 
                         String parts = response.split(":")[1];
                         word = parts.split(",")[0].replace("\"", "");
-
+                        Log.e(TAG, word);
                         char[] arrayOfCharacters = word.toCharArray();
-                        System.out.println(word);
                         while (word.contentEquals(String.valueOf(arrayOfCharacters))) {
                             for (int index = 0; index < arrayOfCharacters.length - 2; index++) {
                                 int randomCharacter = randomNumber(0, arrayOfCharacters.length - 1);
@@ -144,26 +140,44 @@ public class GameActivity extends AppCompatActivity {
         queue.add(stringRequest);
         return word;
     }
-//    protected void startGame(TextView scrambledWord, EditText enterScramble, TextView textViewChances){
-//        while (chances > 0) {
-//            task = new TimerTask() {
-//                @Override
-//                public void run() {
-//                    int MAX_SECONDS = 15;
-//                    if (seconds < MAX_SECONDS) {
-//                        seconds++;
-//                    } else {
-//                        if (chances == 1) {
-//                            scrambledWord.setText("You lose. Go back to menu!");
-//                            enterScramble.setVisibility(View.INVISIBLE);
-//                        }
-//                        word = setScrambledWord(scrambledWord);
-//                        chances--;
-//                        textViewChances.setText(String.valueOf(chances));
-//                        cancel();
-//                    }
-//                }
-//            };
-//        }
-//    }
+
+    protected void startGame(TextView scrambledWord, EditText enterScramble, TextView textViewChances, TextView timerText) {
+        Log.e(TAG, "StartGame");
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (seconds < 10) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            timerText.setText(String.valueOf(seconds));
+                        }
+                    });
+                    Log.e(TAG, "Seconds = " + seconds);
+                    seconds++;
+                } else {
+                    if (chances == 1) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                enterScramble.setVisibility(View.INVISIBLE);
+                                scrambledWord.setVisibility(View.INVISIBLE);
+                            }
+                        });
+                        timer.cancel();
+                    }
+                    word = setScrambledWord(scrambledWord);
+                    chances--;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textViewChances.setText(String.valueOf(chances));
+                        }
+                    });
+                    seconds = 0;
+                }
+            }
+        }, 0, 1000);
+    }
 }
