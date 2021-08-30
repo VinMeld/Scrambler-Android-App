@@ -30,8 +30,8 @@ public class GameActivity extends AppCompatActivity {
     String word = "";
     int correct = 0;
     int chances = 3;
-    // int seconds = 0;
-    // TimerTask task;
+     int seconds = 0;
+     TimerTask task;
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
@@ -44,27 +44,7 @@ public class GameActivity extends AppCompatActivity {
             Button buttonRestart = findViewById(R.id.buttonRestart);
             correctWords.setText(String.valueOf(correct));
             textViewChances.setText(String.valueOf(chances));
-//            while (chances > 0) {
-//                task = new TimerTask() {
-//                    @Override
-//                    public void run() {
-//                        int MAX_SECONDS = 15;
-//                        if (seconds < MAX_SECONDS) {
-//                            seconds++;
-//                        } else {
-//                            if (chances == 1) {
-//                                scrambledWord.setText("You lose. Go back to menu!");
-//                                enterScramble.setVisibility(View.INVISIBLE);
-//                            }
-//                            seconds = 0;
-//                            chances--;
-//                            word = setScrambledWord(scrambledWord);
-//                            textViewChances.setText(String.valueOf(chances));
-//                            cancel();
-//                        }
-//                    }
-//                };
-//            }
+            startGame(scrambledWord, enterScramble, textViewChances);
             buttonRestart.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -73,7 +53,7 @@ public class GameActivity extends AppCompatActivity {
                     correctWords.setText(String.valueOf(correct));
                     textViewChances.setText(String.valueOf(chances));
                     enterScramble.setVisibility(View.VISIBLE);
-                    // startGame(scrambledWord, enterScramble, textViewChances);
+                    startGame(scrambledWord, enterScramble, textViewChances);
                 }
             });
             menu.setOnClickListener(new View.OnClickListener() {
@@ -144,26 +124,26 @@ public class GameActivity extends AppCompatActivity {
         queue.add(stringRequest);
         return word;
     }
-//    protected void startGame(TextView scrambledWord, EditText enterScramble, TextView textViewChances){
-//        while (chances > 0) {
-//            task = new TimerTask() {
-//                @Override
-//                public void run() {
-//                    int MAX_SECONDS = 15;
-//                    if (seconds < MAX_SECONDS) {
-//                        seconds++;
-//                    } else {
-//                        if (chances == 1) {
-//                            scrambledWord.setText("You lose. Go back to menu!");
-//                            enterScramble.setVisibility(View.INVISIBLE);
-//                        }
-//                        word = setScrambledWord(scrambledWord);
-//                        chances--;
-//                        textViewChances.setText(String.valueOf(chances));
-//                        cancel();
-//                    }
-//                }
-//            };
-//        }
-//    }
+    protected void startGame(TextView scrambledWord, EditText enterScramble, TextView textViewChances){
+        while (chances > 0) {
+            task = new TimerTask() {
+                @Override
+                public void run() {
+                    int MAX_SECONDS = 15;
+                    if (seconds < MAX_SECONDS) {
+                        seconds++;
+                    } else {
+                        if (chances == 1) {
+                            scrambledWord.setText("You lose. Go back to menu!");
+                            enterScramble.setVisibility(View.INVISIBLE);
+                        }
+                        word = setScrambledWord(scrambledWord);
+                        chances--;
+                        textViewChances.setText(String.valueOf(chances));
+                        cancel();
+                    }
+                }
+            };
+        }
+    }
 }
