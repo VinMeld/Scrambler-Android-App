@@ -41,6 +41,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Users");
+        assert user != null;
         String userID = user.getUid();
         final TextView greetingTextView = findViewById(R.id.welcome);
         final TextView emailTextView = findViewById(R.id.textEmailAddress);

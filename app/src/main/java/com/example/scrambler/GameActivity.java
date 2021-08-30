@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
@@ -18,6 +19,16 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 
 import java.util.Random;
@@ -26,14 +37,15 @@ import java.util.TimerTask;
 
 
 public class GameActivity extends AppCompatActivity {
-    private static final String TAG = "MyActivity";
+    private static final String TAG = "GameActivity";
     String word = "";
     int correct = 0;
     int chances = 3;
-    int seconds = 1;
-    boolean restart = false;
-    TimerTask task;
-
+    int seconds = 0;
+    FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+    String userID = firebaseUser.getUid();
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    DocumentReference user = db.collection("Users").document(userID);
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
@@ -47,9 +59,8 @@ public class GameActivity extends AppCompatActivity {
         correctWords.setText(String.valueOf(correct));
         textViewChances.setText(String.valueOf(chances));
         TextView timerText = findViewById(R.id.textViewTimer);
-
-        startGame(scrambledWord, enterScramble, textViewChances, timerText);
         word = setScrambledWord(scrambledWord);
+        startGame(scrambledWord, enterScramble, textViewChances, timerText);
         // RESTART BUTTON
         buttonRestart.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,38 +117,41 @@ public class GameActivity extends AppCompatActivity {
         RequestQueue queue = Volley.newRequestQueue(this);
         String url = "https://most-common-words.herokuapp.com/api/search?top=" +
                 wordNumber;
-
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        String parts = response.split(":")[1];
-                        word = parts.split(",")[0].replace("\"", "");
-                        Log.e(TAG, word);
-                        char[] arrayOfCharacters = word.toCharArray();
-                        while (word.contentEquals(String.valueOf(arrayOfCharacters))) {
-                            for (int index = 0; index < arrayOfCharacters.length - 2; index++) {
-                                int randomCharacter = randomNumber(0, arrayOfCharacters.length - 1);
-                                int randomMover = randomNumber(0, arrayOfCharacters.length - 1);
-                                char temp = arrayOfCharacters[randomCharacter];
-                                arrayOfCharacters[randomCharacter] = arrayOfCharacters[randomMover];
-                                arrayOfCharacters[randomMover] = temp;
+//        if(word.isEmpty()){
+//            word = "a";
+//        }
+        // while (word.length() < 3) {
+            // Request a string response from the provided URL.
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            String parts = response.split(":")[1];
+                            word = parts.split(",")[0].replace("\"", "");
+                            Log.e(TAG, word);
+                            char[] arrayOfCharacters = word.toCharArray();
+                            while (word.contentEquals(String.valueOf(arrayOfCharacters))) {
+                                for (int index = 0; index < arrayOfCharacters.length - 2; index++) {
+                                    int randomCharacter = randomNumber(0, arrayOfCharacters.length - 1);
+                                    int randomMover = randomNumber(0, arrayOfCharacters.length - 1);
+                                    char temp = arrayOfCharacters[randomCharacter];
+                                    arrayOfCharacters[randomCharacter] = arrayOfCharacters[randomMover];
+                                    arrayOfCharacters[randomMover] = temp;
+                                }
                             }
+                            String randomWordScrambled = String.valueOf(arrayOfCharacters);
+                            // Display the first 500 characters of the response string.
+                            scrambledWord.setText(randomWordScrambled);
                         }
-                        String randomWordScrambled = String.valueOf(arrayOfCharacters);
-                        // Display the first 500 characters of the response string.
-                        scrambledWord.setText(randomWordScrambled);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                scrambledWord.setText("That didn't work!");
-            }
-        });
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    scrambledWord.setText("That didn't work!");
+                }
+            });
+            // Add the request to the RequestQueue.
+            queue.add(stringRequest);
+       // }
         return word;
     }
 
@@ -166,6 +180,8 @@ public class GameActivity extends AppCompatActivity {
                             }
                         });
                         timer.cancel();
+                        // ADDING SCORE TO DATABASE
+                        user.update("scores", FieldValue.arrayUnion(correct));
                     }
                     word = setScrambledWord(scrambledWord);
                     chances--;
@@ -175,7 +191,7 @@ public class GameActivity extends AppCompatActivity {
                             textViewChances.setText(String.valueOf(chances));
                         }
                     });
-                    seconds = 0;
+                    seconds = 1;
                 }
             }
         }, 0, 1000);
