@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
@@ -18,6 +19,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 
 import java.util.Random;
@@ -95,6 +103,25 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
+    protected User getUser(){
+        final User[] userProfile = new User[1];
+        final FirebaseUser[] user = {FirebaseAuth.getInstance().getCurrentUser()};
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Users");
+        String userID = user[0].getUid();
+        reference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                userProfile[0] = snapshot.getValue(User.class);
+
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(GameActivity.this, "Something wrong happened!", Toast.LENGTH_SHORT).show();
+            }
+        });
+        return userProfile[0];
+    }
+
     protected int randomNumber(int low, int high) {
         Random r = new Random();
         return r.nextInt(high - low) + low;
@@ -166,6 +193,9 @@ public class GameActivity extends AppCompatActivity {
                             }
                         });
                         timer.cancel();
+                        // ADDING SCORE TO DATABASE
+                        User user = getUser();
+                        user.addScore(correct);
                     }
                     word = setScrambledWord(scrambledWord);
                     chances--;
