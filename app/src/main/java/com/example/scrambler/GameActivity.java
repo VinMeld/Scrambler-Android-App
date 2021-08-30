@@ -129,19 +129,26 @@ public class GameActivity extends AppCompatActivity {
                             String parts = response.split(":")[1];
                             word = parts.split(",")[0].replace("\"", "");
                             Log.e(TAG, word);
-                            char[] arrayOfCharacters = word.toCharArray();
-                            while (word.contentEquals(String.valueOf(arrayOfCharacters))) {
-                                for (int index = 0; index < arrayOfCharacters.length - 2; index++) {
-                                    int randomCharacter = randomNumber(0, arrayOfCharacters.length - 1);
-                                    int randomMover = randomNumber(0, arrayOfCharacters.length - 1);
-                                    char temp = arrayOfCharacters[randomCharacter];
-                                    arrayOfCharacters[randomCharacter] = arrayOfCharacters[randomMover];
-                                    arrayOfCharacters[randomMover] = temp;
+                            if(word.length() < 3){
+                                char[] arrayOfCharacters = word.toCharArray();
+                                String randomWordScrambled = new String(new char[]{arrayOfCharacters[1],arrayOfCharacters[0]});
+                                scrambledWord.setText(randomWordScrambled);
+                            } else {
+                                char[] arrayOfCharacters = word.toCharArray();
+                                while (word.contentEquals(String.valueOf(arrayOfCharacters))) {
+                                    for (int index = 0; index < arrayOfCharacters.length - 2; index++) {
+                                        int randomCharacter = randomNumber(0, arrayOfCharacters.length - 1);
+                                        int randomMover = randomNumber(0, arrayOfCharacters.length - 1);
+                                        char temp = arrayOfCharacters[randomCharacter];
+                                        arrayOfCharacters[randomCharacter] = arrayOfCharacters[randomMover];
+                                        arrayOfCharacters[randomMover] = temp;
+                                    }
                                 }
+                                String randomWordScrambled = String.valueOf(arrayOfCharacters);
+                                // Display the first 500 characters of the response string.
+                                scrambledWord.setText(randomWordScrambled);
                             }
-                            String randomWordScrambled = String.valueOf(arrayOfCharacters);
-                            // Display the first 500 characters of the response string.
-                            scrambledWord.setText(randomWordScrambled);
+
                         }
                     }, new Response.ErrorListener() {
                 @Override
