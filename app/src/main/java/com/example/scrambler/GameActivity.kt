@@ -44,6 +44,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var textViewChances: TextView? = null
     private var buttonRestart: Button? = null
     private var textViewFlash: TextView? = null
+    private var timerText: TextView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -55,11 +56,14 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         textViewChances = findViewById(R.id.textViewChances)
         buttonRestart = findViewById(R.id.buttonRestart)
         textViewFlash = findViewById(R.id.textViewFlash)
-        correctWords!!.text = correct.toString()
-        textViewChances!!.text = chances.toString()
-        val timerText = findViewById<TextView>(R.id.textViewTimer)
-        word = setScrambledWord(scrambledWord!!)
-        startGame(scrambledWord!!, enterScramble!!, textViewChances!!, timerText!!)
+        timerText = findViewById(R.id.textViewTimer)
+        runOnUiThread {
+            timerText!!.visibility = View.INVISIBLE
+            correctWords!!.text = correct.toString()
+            textViewChances!!.text = chances.toString()
+        }
+        Log.e(TAG, "starting scramble from creation")
+        word = setScrambledWord()
         // RESTART BUTTON
         buttonRestart!!.setOnClickListener {
             if (chances > 0) {
@@ -68,32 +72,42 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             } else {
                 chances = 3
                 correct = 0
-                correctWords!!.text = correct.toString()
-                textViewChances!!.text = chances.toString()
-                enterScramble!!.visibility = View.VISIBLE
-                scrambledWord!!.visibility = View.VISIBLE
+                runOnUiThread {
+                    correctWords!!.text = correct.toString()
+                    textViewChances!!.text = chances.toString()
+                    enterScramble!!.setText("")
+                    enterScramble!!.visibility = View.VISIBLE
+                    scrambledWord!!.visibility = View.VISIBLE
+                    textViewFlash!!.visibility = View.INVISIBLE
+                }
+
                 sleep(1000)
-                word = setScrambledWord(scrambledWord!!)
-                startGame(scrambledWord!!, enterScramble!!, textViewChances!!, timerText)
+                Log.e(TAG, "starting scramble from RESTART")
+                word = setScrambledWord()
             }
         }
         // CHECK IF TYPED CORRECTLY
-        enterScramble!!.setOnKeyListener { _, _, _ -> // IF ANSWER IS CORRECT
-            checkIfCorrect()
-            false
-        }
+//        enterScramble!!.setOnKeyListener { _, _, _ -> // IF ANSWER IS CORRECT
+//            checkIfCorrect()
+//            false
+//        }
     }
-    private fun checkIfCorrect(){
-        if (enterScramble!!.text.toString().contentEquals(word)) {
+    private fun checkIfCorrect(): Boolean {
+        return enterScramble!!.text.toString().contentEquals(word)
+
+    }
+    private fun correctProcedure() {
+        runOnUiThread {
             enterScramble!!.setText("")
-            correct++
             correctWords!!.text = correct.toString()
             textViewFlash!!.visibility = View.VISIBLE
             textViewFlash!!.text = "Correct!"
-            sleep(1000L)
-            correctGuess = true
-            word = setScrambledWord(scrambledWord!!)
         }
+        correct++
+        sleep(1000L)
+        correctGuess = true
+        Log.e(TAG, "starting scramble from getting it right")
+        runOnUiThread {word = setScrambledWord()}
     }
     override fun onClick(v: View) {
         when (v.id) {
@@ -105,7 +119,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         return r.nextInt(high - low) + low
     }
 
-    protected fun setScrambledWord(scrambledWord: TextView): String {
+    protected fun setScrambledWord(): String {
         Log.e(TAG, "Scrambling word")
         val wordNumber = randomNumber(1, 1000)
         // Instantiate the RequestQueue.
@@ -121,7 +135,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     if (word.length < 3) {
                         val arrayOfCharacters = word.toCharArray()
                         val randomWordScrambled = String(charArrayOf(arrayOfCharacters[1], arrayOfCharacters[0]))
-                        scrambledWord.text = randomWordScrambled
+                        runOnUiThread {
+                            scrambledWord!!.text = randomWordScrambled
+                        }
                     } else {
                         val arrayOfCharacters = word.toCharArray()
                         while (word.contentEquals(String(arrayOfCharacters))) {
@@ -134,60 +150,76 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             }
                         }
                         val randomWordScrambled = String(arrayOfCharacters)
-                        textViewFlash!!.visibility = View.INVISIBLE
-                        scrambledWord.text = randomWordScrambled
-                        seconds = 0
+                        runOnUiThread {
+                            textViewFlash!!.visibility = View.INVISIBLE
+                            scrambledWord!!.text = randomWordScrambled
+                        }
+                        seconds = 1
+                        startGame()
                     }
-                }) { scrambledWord.text = "That didn't work!" }
+                }) { scrambledWord!!.text = "That didn't work!" }
         // Add the request to the RequestQueue.
         queue.add(stringRequest)
+        sleep(100L)
         return word
     }
 
-    protected fun startGame(scrambledWord: TextView, enterScramble: EditText, textViewChances: TextView, timerText: TextView) {
+    protected fun startGame() {
         Log.e(TAG, "StartGame")
-        sleep(100L)
+        runOnUiThread{
+            timerText!!.visibility = View.VISIBLE
+        }
+
         scopeTimer.launch(Dispatchers.Default) {
-            val job1 = launch {
-                while(seconds < 11) {
-                    runOnUiThread { timerText.text = seconds.toString() }
+            val waitLength = 5
+            val job1 = launch(Dispatchers.Unconfined) {
+                while(seconds < waitLength) {
+                    runOnUiThread { timerText!!.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
                     delay(1000L)
-                    seconds++
+                    seconds += 1
                 }
             }
-            delay(10000L)
-            while(!job1.isCompleted){
+            var correctBool = false
+            while(!job1.isCompleted) {
                 delay(500L)
+                if(checkIfCorrect()){
+                    correctBool = true
+                    break
+                }
             }
-            Log.e(TAG, seconds.toString())
-            if (chances == 1) {
-                chances--
-                runOnUiThread {
-                    textViewFlash!!.text = "You Lose!"
-                    textViewFlash!!.visibility = View.VISIBLE
-                    textViewChances.text = chances.toString()
-                    enterScramble.visibility = View.INVISIBLE
-                    scrambledWord.visibility = View.INVISIBLE
+            when {
+                correctBool -> {
+                    job1.cancelAndJoin();
+                    correctProcedure()
                 }
-                user.update("scores", FieldValue.arrayUnion(correct))
-                runOnUiThread { textViewChances.text = chances.toString() }
-            } else if(job1.isCompleted){
-                runOnUiThread {
-                    textViewFlash!!.text = word
-                    textViewFlash!!.visibility = View.VISIBLE
+                !correctBool && chances == 1 -> {
+                    chances--
+                    runOnUiThread {
+                        textViewFlash!!.text = "You Lose!"
+                        textViewFlash!!.visibility = View.VISIBLE
+                        textViewChances!!.text = chances.toString()
+                        enterScramble!!.visibility = View.INVISIBLE
+                        scrambledWord!!.visibility = View.INVISIBLE
+                        enterScramble!!.visibility = View.INVISIBLE
+                    }
+                    user.update("scores", FieldValue.arrayUnion(correct))
+                    runOnUiThread { textViewChances!!.text = chances.toString() }
                 }
-                Log.e(TAG, "here")
-                job1.cancelAndJoin()
-                chances--
-                runOnUiThread { textViewChances.text = chances.toString() }
-                delay(1000L)
-                seconds = 1
-                word = setScrambledWord(scrambledWord)
-                startGame(scrambledWord, enterScramble, textViewChances, timerText)
-            } else if (correctGuess) {
-                job1.cancelAndJoin();
-                correctGuess = false
+                !correctBool -> {
+                    runOnUiThread {
+                        textViewFlash!!.text = word
+                        textViewFlash!!.visibility = View.VISIBLE
+                    }
+                    Log.e(TAG, "here")
+                    job1.cancelAndJoin()
+                    chances--
+                    runOnUiThread { textViewChances!!.text = chances.toString() }
+                    delay(1000L)
+                    seconds = 1
+                    Log.e(TAG, "starting scramble from missing")
+                    word = setScrambledWord()
+                }
             }
         }
     }
