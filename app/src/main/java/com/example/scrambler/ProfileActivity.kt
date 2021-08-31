@@ -16,6 +16,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import android.widget.Toast
+import java.lang.Thread.sleep
 
 class ProfileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,6 +34,7 @@ class ProfileActivity : AppCompatActivity() {
         }
         val user = FirebaseAuth.getInstance().currentUser
         val reference = FirebaseDatabase.getInstance().getReference("Users")
+        sleep(1000L)
         assert(user != null)
         val userID = user!!.uid
         val greetingTextView = findViewById<TextView>(R.id.welcome)
