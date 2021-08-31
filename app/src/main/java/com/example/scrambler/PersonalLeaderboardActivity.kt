@@ -91,7 +91,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                 }
                             }
                             Collections.sort(scores, CustomComparator())
-                            var leaderboardString = "Could not retrieve data"
+                            var leaderboardString = ""
                             Log.e(TAG, scores.toString())
                             (scores.forEachIndexed { index, scoreObj ->
                                 leaderboardString += ((index + 1).toString() + ". " + scoreObj.toString() + "\n")
