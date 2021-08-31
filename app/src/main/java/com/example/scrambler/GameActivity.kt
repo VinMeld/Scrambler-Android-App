@@ -11,6 +11,7 @@ import android.text.method.KeyListener
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.core.view.isVisible
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.android.volley.Request
@@ -42,6 +43,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var enterScramble: EditText? = null
     private var textViewChances: TextView? = null
     private var buttonRestart: Button? = null
+    private var textViewFlash: TextView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -52,6 +54,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         enterScramble = findViewById(R.id.textViewWord)
         textViewChances = findViewById(R.id.textViewChances)
         buttonRestart = findViewById(R.id.buttonRestart)
+        textViewFlash = findViewById(R.id.textViewFlash)
         correctWords!!.text = correct.toString()
         textViewChances!!.text = chances.toString()
         val timerText = findViewById<TextView>(R.id.textViewTimer)
@@ -85,6 +88,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             enterScramble!!.setText("")
             correct++
             correctWords!!.text = correct.toString()
+            textViewFlash!!.visibility = View.VISIBLE
+            textViewFlash!!.text = "Correct!"
             sleep(1000L)
             correctGuess = true
             word = setScrambledWord(scrambledWord!!)
@@ -129,6 +134,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             }
                         }
                         val randomWordScrambled = String(arrayOfCharacters)
+                        textViewFlash!!.visibility = View.INVISIBLE
                         scrambledWord.text = randomWordScrambled
                         seconds = 0
                     }
@@ -152,12 +158,14 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
             delay(10000L)
             while(!job1.isCompleted){
-                delay(100)
+                delay(500L)
             }
             Log.e(TAG, seconds.toString())
             if (chances == 1) {
                 chances--
                 runOnUiThread {
+                    textViewFlash!!.text = "You Lose!"
+                    textViewFlash!!.visibility = View.VISIBLE
                     textViewChances.text = chances.toString()
                     enterScramble.visibility = View.INVISIBLE
                     scrambledWord.visibility = View.INVISIBLE
@@ -165,6 +173,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 user.update("scores", FieldValue.arrayUnion(correct))
                 runOnUiThread { textViewChances.text = chances.toString() }
             } else if(job1.isCompleted){
+                runOnUiThread {
+                    textViewFlash!!.text = word
+                    textViewFlash!!.visibility = View.VISIBLE
+                }
                 Log.e(TAG, "here")
                 job1.cancelAndJoin()
                 chances--
