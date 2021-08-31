@@ -171,7 +171,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         scopeTimer.launch(Dispatchers.Default) {
-            val waitLength = 5
+            val waitLength = 11
             val job1 = launch(Dispatchers.Unconfined) {
                 while(seconds < waitLength) {
                     runOnUiThread { timerText!!.text = seconds.toString() }
