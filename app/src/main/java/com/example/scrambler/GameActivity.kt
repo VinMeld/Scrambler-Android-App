@@ -19,6 +19,7 @@ import java.util.concurrent.Executors
 
 class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
+    var randomWordScrambled = ""
     private var correct = 0
     private var chances = 3
     private var seconds = 0
@@ -119,7 +120,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     seconds += 1
                 }
             }
-            var randomWordScrambled = ""
             val wordCall = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val wordNumber = randomNumber(1, 1000)
                 // Instantiate the RequestQueue.
@@ -172,7 +172,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             var correctBool = false
             while (!guess.isCompleted) {
                 delay(500L)
-                if (enterScramble!!.text.toString().lowercase().contentEquals(word.lowercase())) {
+                if (enterScramble!!.text.toString().lowercase().trim().contentEquals(word.lowercase())) {
                     Log.e(TAG, "Correct")
                     correctBool = true
                     break
@@ -219,7 +219,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onPause() {
         Log.e(TAG, "in pause()")
-        addToDatabase()
+        if(chances != 0 ){
+            addToDatabase()
+        }
         runBlocking {
             scopeTimer.cancel()
         }

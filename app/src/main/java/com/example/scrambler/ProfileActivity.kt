@@ -22,6 +22,19 @@ class ProfileActivity : AppCompatActivity() {
         val menu = findViewById<Button>(R.id.buttonMenuMain)
         logout.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
+            val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
+            val editor = preferences.edit()
+            editor.putString("remember", "false");
+            editor.apply()
+            val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
+            val editorEmail = preferencesEmail.edit()
+            editorEmail.putString("email", null);
+            editorEmail.apply()
+            val preferencesPassword = getSharedPreferences("email", MODE_PRIVATE)
+            val editorPassword = preferencesPassword.edit()
+            editorPassword.putString("password", null);
+            editorPassword.apply()
+            finish()
             startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
         }
         menu.setOnClickListener {

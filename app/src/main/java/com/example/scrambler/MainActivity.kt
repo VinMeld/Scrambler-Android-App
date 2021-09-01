@@ -2,7 +2,9 @@ package com.example.scrambler
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.*
@@ -54,8 +56,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 if (user != null) {
                     (this.application as Scrambler).setCurrentUser(user.uid)
                 }
-
                 if (user!!.isEmailVerified) {
+                    val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
+                    val editorEmail = preferencesEmail.edit()
+                    editorEmail.putString("email", email);
+                    editorEmail.apply()
+                    val preferencesPassword = getSharedPreferences("password", MODE_PRIVATE)
+                    val editorPassword = preferencesPassword.edit()
+                    editorPassword.putString("password", password);
+                    editorPassword.apply()
                     startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                 } else {
                     user.sendEmailVerification()
@@ -82,7 +91,40 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         forgotPassword = findViewById(R.id.textForgot)
         forgotPassword?.setOnClickListener(this)
         remember = findViewById(R.id.checkBox)
-        editTextEmail?.setText("vinaymeldrum@gmail.com")
-        editTextPassword?.setText("vinay123")
+
+        val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
+        val checkbox = preferences.getString("remember", "")
+        val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
+        val email = preferencesEmail.getString("email", "")
+        val preferencesPassword = getSharedPreferences("password", MODE_PRIVATE)
+        val password = preferencesPassword.getString("password", "")
+        if(checkbox.equals("true") && email != null && password != null){
+                mAuth!!.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val user = FirebaseAuth.getInstance().currentUser
+                        if (user != null) {
+                            (this.application as Scrambler).setCurrentUser(user.uid)
+                            startActivity(Intent(this@MainActivity, MenuActivity::class.java))
+                        }
+                    }
+                }
+        } else if(checkbox.equals("false")) {
+            Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
+        }
+        remember?.setOnCheckedChangeListener { buttonView, _ ->
+            if(buttonView.isChecked){
+                val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
+                val editor = preferences.edit()
+                editor.putString("remember", "true");
+                editor.apply()
+                Toast.makeText(this, "Remember Me Checked", Toast.LENGTH_SHORT).show()
+            } else if(!buttonView.isChecked){
+                val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
+                val editor = preferences.edit()
+                editor.putString("remember", "false");
+                editor.apply()
+                Toast.makeText(this, "Remember Me Unchecked", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
