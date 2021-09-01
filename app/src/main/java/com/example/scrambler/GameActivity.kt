@@ -9,13 +9,9 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import com.android.volley.Request
-import com.android.volley.Request.Method.GET
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
 import com.example.scrambler.Utils.Scrambler
-import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.*
 import java.lang.Thread.sleep
 import java.util.*
@@ -57,7 +53,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         // RESTART BUTTON
         buttonRestart!!.setOnClickListener {
             if (chances > 0) {
-                val toast = Toast.makeText(applicationContext, "Keep trying! You're not done yet", Toast.LENGTH_SHORT)
+                val toast = Toast.makeText(
+                    applicationContext,
+                    "Keep trying! You're not done yet",
+                    Toast.LENGTH_SHORT
+                )
                 toast.show()
             } else {
                 chances = 3
@@ -68,7 +68,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     textViewChances!!.text = chances.toString()
                     enterScramble!!.setText("")
                     enterScramble!!.visibility = View.VISIBLE
-                    scrambledWord!!.visibility = View.VISIBLE
                     textViewFlash!!.visibility = View.INVISIBLE
                 }
                 Log.e(TAG, "starting scramble from RESTART")
@@ -76,23 +75,26 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+
     private fun correctProcedure() {
+        correct++
         runOnUiThread {
             enterScramble!!.setText("")
             correctWords!!.text = correct.toString()
             textViewFlash!!.visibility = View.VISIBLE
             textViewFlash!!.text = "Correct!"
         }
-        correct++
         sleep(1000L)
         Log.e(TAG, "starting scramble from getting it right")
         startGame()
     }
+
     override fun onClick(v: View) {
         when (v.id) {
             R.id.buttonMenu -> startActivity(Intent(this, MenuActivity::class.java))
         }
     }
+
     protected fun randomNumber(low: Int, high: Int): Int {
         val r = Random()
         return r.nextInt(high - low) + low
@@ -101,16 +103,16 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     @SuppressLint("SetTextI18n")
     protected fun startGame() {
         Log.e(TAG, "StartGame")
-        runOnUiThread{
+        runOnUiThread {
             timerText!!.visibility = View.VISIBLE
         }
         scopeTimer.launch(Dispatchers.Default) {
             delay(100L)
-            val waitLength = 11
+            val waitLength = 16
             val guess = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 // Wait for UI to actually change on screen.
                 delay(800L)
-                while(seconds < waitLength) {
+                while (seconds < waitLength) {
                     runOnUiThread { timerText!!.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
                     delay(1000L)
@@ -149,10 +151,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 )
                 queue.add(stringRequest)
-
             }
             // Wait for word to generate
-            while(!wordCall.isCompleted && randomWordScrambled == "") {
+            while (!wordCall.isCompleted) {
                 delay(500L)
             }
             delay(100L)
@@ -161,7 +162,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             // Display timer and set random word
             runOnUiThread {
                 scrambledWord!!.text = randomWordScrambled
-                scrambledWord!!.visibility = View.VISIBLE
                 textViewFlash!!.visibility = View.INVISIBLE
                 timerText!!.visibility = View.VISIBLE
             }
@@ -170,20 +170,19 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             Log.e(TAG, "Reset timer $seconds")
             // Wait for guess to be completed
             var correctBool = false
-            while(!guess.isCompleted) {
+            while (!guess.isCompleted) {
                 delay(500L)
-                if(enterScramble!!.text.toString().contentEquals(word)){
+                if (enterScramble!!.text.toString().lowercase().contentEquals(word.lowercase())) {
                     Log.e(TAG, "Correct")
                     correctBool = true
                     break
                 }
             }
-            randomWordScrambled = ""
             when {
                 // If they got it right then cancel guess and restart
                 correctBool -> {
                     seconds = 1
-                    guess.cancelAndJoin();
+                    guess.cancelAndJoin()
                     correctProcedure()
                 }
                 // If they got it wrong and they have no chances left set up loss stuff and push
@@ -195,13 +194,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         textViewFlash!!.visibility = View.VISIBLE
                         textViewChances!!.text = chances.toString()
                         enterScramble!!.visibility = View.INVISIBLE
-                        scrambledWord!!.setText("")
-                        scrambledWord!!.visibility = View.INVISIBLE
                     }
-                    val userID =  (this@GameActivity.application as Scrambler).getCurrentUser()
-                    val db = FirebaseFirestore.getInstance()
-                    val user = userID?.let { db.collection("Users").document(it) }
-                    user?.update("scores", FieldValue.arrayUnion(correct))
+                    addToDatabase()
                     runOnUiThread { textViewChances!!.text = chances.toString() }
                 }
                 // If they got it wrong, subtract chances restart
@@ -225,16 +219,56 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onPause() {
         Log.e(TAG, "in pause()")
-        val userID =  (this.application as Scrambler).getCurrentUser()
-        val db = FirebaseFirestore.getInstance()
-        val user = userID?.let { db.collection("Users").document(it) }
-        user?.update("scores", FieldValue.arrayUnion(correct))
+        addToDatabase()
         runBlocking {
             scopeTimer.cancel()
         }
         super.onPause()
     }
+
     companion object {
         private const val TAG = "GameActivity"
+    }
+
+    private fun addToDatabase() {
+        val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+        scopeFirebaseAdd.launch(Dispatchers.Default) {
+            val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
+            val db = FirebaseFirestore.getInstance()
+            val user = db.collection("Users")
+            val user1: MutableMap<String, Any?> = HashMap()
+            val job1 = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                if (userID != null && correct != 0) {
+                    user.document(userID).get().addOnSuccessListener { document ->
+                        if (document != null) {
+                            val username = document["username"]
+                            val scores = document["scores"]
+                            if (scores != null) {
+                                scores::class.simpleName?.let { Log.e(TAG, it) }
+                                val newScores = scores as MutableList<Int>?
+                                newScores?.add(correct)
+                                user1["username"] = username
+                                user1["scores"] = newScores
+                                Log.e(TAG, "trying for multiple scores")
+                            }
+                        } else {
+                            Log.d(TAG, "No such document")
+                        }
+                    }.addOnFailureListener { exception ->
+                        Log.d(TAG, "get failed with ", exception)
+                    }
+                }
+            }
+            while (!job1.isCompleted) {
+                delay(1000L)
+            }
+            if (user1["username"] != null && userID != null) {
+                Log.e(TAG, user1.toString())
+                db.collection("Users").document(userID)
+                    .set(user1)
+                    .addOnSuccessListener { Log.d(TAG, "DocumentSnapshot successfully written!") }
+                    .addOnFailureListener { e -> Log.w(TAG, "Error writing document", e) }
+            }
+        }
     }
 }

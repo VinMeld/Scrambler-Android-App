@@ -11,9 +11,6 @@ class User {
     var email: String? = null
 
     constructor() {}
-
-    val TAG = "com.example.scrambler.MainActivity"
-
     constructor(username: String?, email: String?) {
         this.username = username
         this.email = email
@@ -27,8 +24,8 @@ class User {
         if (UUID != null) {
             db.collection("Users").document(UUID)
                 .set(user)
-                .addOnSuccessListener { Log.d(TAG, "DocumentSnapshot successfully written!") }
-                .addOnFailureListener { e -> Log.w(TAG, "Error writing document", e) }
+                .addOnSuccessListener { Log.d("Main Activity", "DocumentSnapshot successfully written!") }
+                .addOnFailureListener { e -> Log.w("Main Activity", "Error writing document", e) }
         }
     }
 }

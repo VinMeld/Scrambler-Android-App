@@ -46,12 +46,18 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                 // Log.e(TAG, (String) userSnapShot.get("scores"));
                                 @Suppress("UNCHECKED_CAST")
                                 scores = userSnapShot["scores"] as MutableList<Int>?
-                                scores?.sortDescending()
                                 if (scores != null) {
+                                    scores?.sortDescending()
+                                    Log.e(TAG, "Personal Leaderboard $scores")
                                     val leaderboardText = StringBuilder()
                                     for (i in scores!!.indices) {
-                                        leaderboardText.append(i + 1).append(". ").append(scores!![i])
-                                            .append("\n")
+                                        if(i < 10) {
+                                            if(scores!![i] != 0) {
+                                                leaderboardText.append(i + 1).append(". ")
+                                                    .append(scores!![i])
+                                                    .append("\n")
+                                            }
+                                        }
                                     }
                                     leaderboard!!.text = leaderboardText
                                 } else {
@@ -77,12 +83,14 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                 }
                             }
 
-                            var scores = mutableListOf<UserObject?>()
+                            val scores = mutableListOf<UserObject?>()
                             for (documents in userSnapShot) {
                                 (documents.get("scores") as MutableList<Int>?)?.forEachIndexed { _, score ->
-                                    val newEntry =
-                                        UserObject(documents.get("username") as String, score)
-                                    scores.add(newEntry)
+                                    if(score != 0){
+                                        val newEntry =
+                                            UserObject(documents.get("username") as String, score)
+                                        scores.add(newEntry)
+                                    }
                                 }
                             }
                             class CustomComparator : Comparator<UserObject?> {
@@ -96,7 +104,9 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             var leaderboardString = ""
                             Log.e(TAG, scores.toString())
                             (scores.forEachIndexed { index, scoreObj ->
-                                leaderboardString += ((index + 1).toString() + ". " + scoreObj.toString() + "\n")
+                                if(index < 10){
+                                    leaderboardString += ((index + 1).toString() + ". " + scoreObj.toString() + "\n")
+                                }
                             })
                             globalLeaderboard!!.text = leaderboardString
                         } else {

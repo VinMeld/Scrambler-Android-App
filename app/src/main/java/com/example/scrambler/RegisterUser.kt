@@ -77,27 +77,39 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
         }
         progressBar!!.visibility = View.VISIBLE
         mAuth!!.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        println("$username $email")
-                        val user = User(username, email)
-                        FirebaseDatabase.getInstance().getReference("Users")
-                                .child(FirebaseAuth.getInstance().currentUser!!.uid)
-                                .setValue(user).addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        Toast.makeText(this@RegisterUser, "User has been registered successfully!", Toast.LENGTH_LONG).show()
-                                        val firebaseUser = FirebaseAuth.getInstance().currentUser
-                                        val userID = firebaseUser!!.uid
-                                        user.addUuid(userID)
-                                    } else {
-                                        Toast.makeText(this@RegisterUser, "Failed to register! Try again!", Toast.LENGTH_LONG).show()
-                                    }
-                                    progressBar!!.visibility = View.GONE
-                                }
-                    } else {
-                        Toast.makeText(this@RegisterUser, "Failed to register! Try again!", Toast.LENGTH_LONG).show()
-                        progressBar!!.visibility = View.GONE
-                    }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    println("$username $email")
+                    val user = User(username, email)
+                    FirebaseDatabase.getInstance().getReference("Users")
+                        .child(FirebaseAuth.getInstance().currentUser!!.uid)
+                        .setValue(user).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Toast.makeText(
+                                    this@RegisterUser,
+                                    "User has been registered successfully!",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                val firebaseUser = FirebaseAuth.getInstance().currentUser
+                                val userID = firebaseUser!!.uid
+                                user.addUuid(userID)
+                            } else {
+                                Toast.makeText(
+                                    this@RegisterUser,
+                                    "Failed to register! Try again!",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            progressBar!!.visibility = View.GONE
+                        }
+                } else {
+                    Toast.makeText(
+                        this@RegisterUser,
+                        "Failed to register! Try again!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    progressBar!!.visibility = View.GONE
                 }
+            }
     }
 }
