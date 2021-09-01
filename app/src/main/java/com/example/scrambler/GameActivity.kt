@@ -1,5 +1,6 @@
 package com.example.scrambler
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
 import android.os.Bundle
@@ -8,6 +9,9 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import com.android.volley.Request
+import com.android.volley.Request.Method.GET
+import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
 import com.example.scrambler.Utils.Scrambler
@@ -15,13 +19,13 @@ import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.*
 import java.lang.Thread.sleep
 import java.util.*
+import java.util.concurrent.Executors
 
 class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
     private var correct = 0
     private var chances = 3
     private var seconds = 0
-    private var correctGuess = false
     private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
     private var menu: Button? = null
     private var correctWords: TextView? = null
@@ -49,7 +53,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             textViewChances!!.text = chances.toString()
         }
         Log.e(TAG, "starting scramble from creation")
-        word = setScrambledWord()
+        startGame()
         // RESTART BUTTON
         buttonRestart!!.setOnClickListener {
             if (chances > 0) {
@@ -58,6 +62,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             } else {
                 chances = 3
                 correct = 0
+                seconds = 1
                 runOnUiThread {
                     correctWords!!.text = correct.toString()
                     textViewChances!!.text = chances.toString()
@@ -66,21 +71,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     scrambledWord!!.visibility = View.VISIBLE
                     textViewFlash!!.visibility = View.INVISIBLE
                 }
-
-                sleep(1000)
                 Log.e(TAG, "starting scramble from RESTART")
-                word = setScrambledWord()
+                startGame()
             }
         }
-        // CHECK IF TYPED CORRECTLY
-//        enterScramble!!.setOnKeyListener { _, _, _ -> // IF ANSWER IS CORRECT
-//            checkIfCorrect()
-//            false
-//        }
-    }
-    private fun checkIfCorrect(): Boolean {
-        return enterScramble!!.text.toString().contentEquals(word)
-
     }
     private fun correctProcedure() {
         runOnUiThread {
@@ -91,9 +85,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
         correct++
         sleep(1000L)
-        correctGuess = true
         Log.e(TAG, "starting scramble from getting it right")
-        runOnUiThread {word = setScrambledWord()}
+        startGame()
     }
     override fun onClick(v: View) {
         when (v.id) {
@@ -105,26 +98,38 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         return r.nextInt(high - low) + low
     }
 
-    protected fun setScrambledWord(): String {
-        Log.e(TAG, "Scrambling word")
-        val wordNumber = randomNumber(1, 1000)
-        // Instantiate the RequestQueue.
-        val queue = Volley.newRequestQueue(this)
-        val url = "https://most-common-words.herokuapp.com/api/search?top=" +
-                wordNumber
-        // Request a string response from the provided URL.
-        val stringRequest = StringRequest(Request.Method.GET, url,
-                { response ->
-                    val parts = response.split(":").toTypedArray()[1]
-                    word = parts.split(",").toTypedArray()[0].replace("\"", "")
-                    Log.e(TAG, word)
-                    if (word.length < 3) {
-                        val arrayOfCharacters = word.toCharArray()
-                        val randomWordScrambled = String(charArrayOf(arrayOfCharacters[1], arrayOfCharacters[0]))
-                        runOnUiThread {
-                            scrambledWord!!.text = randomWordScrambled
-                        }
-                    } else {
+    @SuppressLint("SetTextI18n")
+    protected fun startGame() {
+        Log.e(TAG, "StartGame")
+        runOnUiThread{
+            timerText!!.visibility = View.VISIBLE
+        }
+        scopeTimer.launch(Dispatchers.Default) {
+            delay(100L)
+            val waitLength = 11
+            val guess = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                // Wait for UI to actually change on screen.
+                delay(800L)
+                while(seconds < waitLength) {
+                    runOnUiThread { timerText!!.text = seconds.toString() }
+                    Log.e(TAG, "Seconds = $seconds")
+                    delay(1000L)
+                    seconds += 1
+                }
+            }
+            var randomWordScrambled = ""
+            val wordCall = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                val wordNumber = randomNumber(1, 1000)
+                // Instantiate the RequestQueue.
+                val queue = Volley.newRequestQueue(this@GameActivity)
+                val url = "https://most-common-words.herokuapp.com/api/search?top=" +
+                        wordNumber
+                Log.e(TAG, "in word call")
+                val stringRequest = StringRequest(Request.Method.GET, url,
+                    { stringResponse ->
+                        val parts = stringResponse.split(":").toTypedArray()[1]
+                        word = parts.split(",").toTypedArray()[0].replace("\"", "")
+                        Log.e(TAG, word)
                         val arrayOfCharacters = word.toCharArray()
                         while (word.contentEquals(String(arrayOfCharacters))) {
                             for (index in 0 until arrayOfCharacters.size - 2) {
@@ -135,61 +140,63 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                                 arrayOfCharacters[randomMover] = temp
                             }
                         }
-                        val randomWordScrambled = String(arrayOfCharacters)
-                        runOnUiThread {
-                            textViewFlash!!.visibility = View.INVISIBLE
-                            scrambledWord!!.text = randomWordScrambled
-                        }
-                        seconds = 1
-                        startGame()
+                        Log.e(TAG, "Resetting randomwordscramble")
+                        randomWordScrambled = String(arrayOfCharacters)
+                    },
+                    { volleyError ->
+                        // handle error
+                        Log.e(TAG, "Error in getting word $volleyError")
                     }
-                }) { scrambledWord!!.text = "That didn't work!" }
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest)
-        sleep(100L)
-        return word
-    }
+                )
+                queue.add(stringRequest)
 
-    protected fun startGame() {
-        Log.e(TAG, "StartGame")
-        runOnUiThread{
-            timerText!!.visibility = View.VISIBLE
-        }
-
-        scopeTimer.launch(Dispatchers.Default) {
-            val waitLength = 11
-            val job1 = launch(Dispatchers.Unconfined) {
-                while(seconds < waitLength) {
-                    runOnUiThread { timerText!!.text = seconds.toString() }
-                    Log.e(TAG, "Seconds = $seconds")
-                    for(i in 1..100){
-                        delay(1000L)
-                        seconds += 1
-                    }
-                }
             }
-            var correctBool = false
-            while(!job1.isCompleted) {
+            // Wait for word to generate
+            while(!wordCall.isCompleted && randomWordScrambled == "") {
                 delay(500L)
-                if(checkIfCorrect()){
+            }
+            delay(100L)
+            Log.e(TAG, "wordcall is complete")
+
+            // Display timer and set random word
+            runOnUiThread {
+                scrambledWord!!.text = randomWordScrambled
+                scrambledWord!!.visibility = View.VISIBLE
+                textViewFlash!!.visibility = View.INVISIBLE
+                timerText!!.visibility = View.VISIBLE
+            }
+            // Set timer to 0
+            seconds = 1
+            Log.e(TAG, "Reset timer $seconds")
+            // Wait for guess to be completed
+            var correctBool = false
+            while(!guess.isCompleted) {
+                delay(500L)
+                if(enterScramble!!.text.toString().contentEquals(word)){
+                    Log.e(TAG, "Correct")
                     correctBool = true
                     break
                 }
             }
+            randomWordScrambled = ""
             when {
+                // If they got it right then cancel guess and restart
                 correctBool -> {
-                    job1.cancelAndJoin();
+                    seconds = 1
+                    guess.cancelAndJoin();
                     correctProcedure()
                 }
+                // If they got it wrong and they have no chances left set up loss stuff and push
+                // too database
                 !correctBool && chances == 1 -> {
                     chances--
                     runOnUiThread {
-                        textViewFlash!!.text = "You Lose!"
+                        textViewFlash!!.text = "You ran out of chances! The word was '$word'."
                         textViewFlash!!.visibility = View.VISIBLE
                         textViewChances!!.text = chances.toString()
                         enterScramble!!.visibility = View.INVISIBLE
+                        scrambledWord!!.setText("")
                         scrambledWord!!.visibility = View.INVISIBLE
-                        enterScramble!!.visibility = View.INVISIBLE
                     }
                     val userID =  (this@GameActivity.application as Scrambler).getCurrentUser()
                     val db = FirebaseFirestore.getInstance()
@@ -197,19 +204,20 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     user?.update("scores", FieldValue.arrayUnion(correct))
                     runOnUiThread { textViewChances!!.text = chances.toString() }
                 }
+                // If they got it wrong, subtract chances restart
                 !correctBool -> {
                     runOnUiThread {
                         textViewFlash!!.text = word
                         textViewFlash!!.visibility = View.VISIBLE
                     }
-                    Log.e(TAG, "here")
-                    job1.cancelAndJoin()
+                    Log.e(TAG, "Got wrong")
+                    guess.cancelAndJoin()
                     chances--
                     runOnUiThread { textViewChances!!.text = chances.toString() }
                     delay(1000L)
                     seconds = 1
                     Log.e(TAG, "starting scramble from missing")
-                    word = setScrambledWord()
+                    startGame()
                 }
             }
         }
