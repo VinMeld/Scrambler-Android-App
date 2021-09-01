@@ -1,26 +1,16 @@
 package com.example.scrambler
 
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import android.os.Bundle
-import com.example.scrambler.R
 import android.content.Intent
-import android.text.method.KeyListener
 import android.util.Log
 import android.view.View
 import android.widget.*
-import androidx.core.view.isVisible
-import androidx.lifecycle.coroutineScope
-import androidx.lifecycle.lifecycleScope
 import com.android.volley.Request
-import com.example.scrambler.MenuActivity
-import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
-import com.example.scrambler.GameActivity
-import com.android.volley.VolleyError
+import com.example.scrambler.Utils.Scrambler
 import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.*
 import java.lang.Thread.sleep
@@ -31,10 +21,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var correct = 0
     private var chances = 3
     private var seconds = 0
-    private var firebaseUser = FirebaseAuth.getInstance().currentUser
-    private var userID = firebaseUser!!.uid
-    private var db = FirebaseFirestore.getInstance()
-    private var user = db.collection("Users").document(userID)
     private var correctGuess = false
     private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
     private var menu: Button? = null
@@ -176,8 +162,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 while(seconds < waitLength) {
                     runOnUiThread { timerText!!.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
-                    delay(1000L)
-                    seconds += 1
+                    for(i in 1..100){
+                        delay(1000L)
+                        seconds += 1
+                    }
                 }
             }
             var correctBool = false
@@ -203,7 +191,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         scrambledWord!!.visibility = View.INVISIBLE
                         enterScramble!!.visibility = View.INVISIBLE
                     }
-                    user.update("scores", FieldValue.arrayUnion(correct))
+                    val userID =  (this@GameActivity.application as Scrambler).getCurrentUser()
+                    val db = FirebaseFirestore.getInstance()
+                    val user = userID?.let { db.collection("Users").document(it) }
+                    user?.update("scores", FieldValue.arrayUnion(correct))
                     runOnUiThread { textViewChances!!.text = chances.toString() }
                 }
                 !correctBool -> {
@@ -224,12 +215,16 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    override fun onStop() {
-        user.update("scores", FieldValue.arrayUnion(correct))
+    override fun onPause() {
+        Log.e(TAG, "in pause()")
+        val userID =  (this.application as Scrambler).getCurrentUser()
+        val db = FirebaseFirestore.getInstance()
+        val user = userID?.let { db.collection("Users").document(it) }
+        user?.update("scores", FieldValue.arrayUnion(correct))
         runBlocking {
             scopeTimer.cancel()
         }
-        super.onStop()
+        super.onPause()
     }
     companion object {
         private const val TAG = "GameActivity"

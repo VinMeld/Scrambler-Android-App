@@ -1,12 +1,10 @@
 package com.example.scrambler
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import com.example.scrambler.R
 import android.content.Intent
+import android.os.Bundle
 import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import com.example.scrambler.GameActivity
-import com.example.scrambler.ProfileActivity
 import com.example.scrambler.PersonalLeaderboardActivity
 
 class MenuActivity : AppCompatActivity() {

@@ -12,14 +12,14 @@ class User {
 
     constructor() {}
 
-    val TAG = "MainActivity"
+    val TAG = "com.example.scrambler.MainActivity"
 
     constructor(username: String?, email: String?) {
         this.username = username
         this.email = email
     }
 
-    fun setUuid(UUID: String?) {
+    fun addUuid(UUID: String?) {
         val user: MutableMap<String, Any?> = HashMap()
         user["username"] = username
         user["scores"] = listOf(0)

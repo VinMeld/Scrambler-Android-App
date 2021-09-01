@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
+import com.example.scrambler.Utils.Scrambler
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
@@ -32,35 +33,36 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
         leaderboard!!.visibility = View.INVISIBLE
         globalLeaderboard!!.visibility = View.INVISIBLE
         scopeLeaderboard.launch(Dispatchers.Default) {
-            val firebaseUser = FirebaseAuth.getInstance().currentUser!!
-            val userID = firebaseUser.uid
+            val userID =  (this@PersonalLeaderboardActivity.application as Scrambler).getCurrentUser()
             val db = FirebaseFirestore.getInstance()
             val user = db.collection("Users")
             var personalLeaderboard = launch {
-                var scores: MutableList<Int>? = null
-                user.document(userID).get().addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val userSnapShot = task.result
-                        if (userSnapShot != null) {
-                            // Log.e(TAG, (String) userSnapShot.get("scores"));
-                            @Suppress("UNCHECKED_CAST")
-                            scores = userSnapShot["scores"] as MutableList<Int>?
-                            scores?.sortDescending()
-                            if (scores != null) {
-                                val leaderboardText = StringBuilder()
-                                for (i in scores!!.indices) {
-                                    leaderboardText.append(i + 1).append(". ").append(scores!![i])
-                                        .append("\n")
+                var scores: MutableList<Int>?
+                if (userID != null) {
+                    user.document(userID).get().addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val userSnapShot = task.result
+                            if (userSnapShot != null) {
+                                // Log.e(TAG, (String) userSnapShot.get("scores"));
+                                @Suppress("UNCHECKED_CAST")
+                                scores = userSnapShot["scores"] as MutableList<Int>?
+                                scores?.sortDescending()
+                                if (scores != null) {
+                                    val leaderboardText = StringBuilder()
+                                    for (i in scores!!.indices) {
+                                        leaderboardText.append(i + 1).append(". ").append(scores!![i])
+                                            .append("\n")
+                                    }
+                                    leaderboard!!.text = leaderboardText
+                                } else {
+                                    leaderboard!!.text = "You have not gotten any correct!"
                                 }
-                                leaderboard!!.text = leaderboardText
                             } else {
-                                leaderboard!!.text = "You have not gotten any correct!"
+                                Log.d(TAG, "No such document")
                             }
                         } else {
-                            Log.d(TAG, "No such document")
+                            Log.d(TAG, "get failed with ", task.exception)
                         }
-                    } else {
-                        Log.d(TAG, "get failed with ", task.exception)
                     }
                 }
             }

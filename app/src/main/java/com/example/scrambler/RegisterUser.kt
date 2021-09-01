@@ -88,7 +88,7 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
                                         Toast.makeText(this@RegisterUser, "User has been registered successfully!", Toast.LENGTH_LONG).show()
                                         val firebaseUser = FirebaseAuth.getInstance().currentUser
                                         val userID = firebaseUser!!.uid
-                                        user.setUuid(userID)
+                                        user.addUuid(userID)
                                     } else {
                                         Toast.makeText(this@RegisterUser, "Failed to register! Try again!", Toast.LENGTH_LONG).show()
                                     }

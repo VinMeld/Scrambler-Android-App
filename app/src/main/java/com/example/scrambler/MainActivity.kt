@@ -1,19 +1,12 @@
 package com.example.scrambler
-
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.example.scrambler.R
 import android.content.Intent
-import com.example.scrambler.RegisterUser
-import com.example.scrambler.ForgotPassword
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.auth.AuthResult
-import com.google.firebase.auth.FirebaseUser
-import com.example.scrambler.MenuActivity
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.*
+import com.example.scrambler.Utils.Scrambler
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var forgotPassword: TextView? = null
@@ -58,6 +51,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         mAuth!!.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val user = FirebaseAuth.getInstance().currentUser
+                if (user != null) {
+                    (this.application as Scrambler).setCurrentUser(user.uid)
+                }
+
                 if (user!!.isEmailVerified) {
                     startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                 } else {
