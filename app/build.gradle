@@ -14,9 +14,6 @@ android {
         resConfigs("en", "fr")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    dexOptions {
-        javaMaxHeapSize "3g"
-    }
     buildTypes {
         getByName("release") {
             multiDexKeepFile file('multidex-config.txt')
