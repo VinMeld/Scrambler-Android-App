@@ -8,7 +8,7 @@ class User {
     var username: String? = null
     var email: String? = null
 
-    constructor() {}
+    constructor()
     constructor(username: String?, email: String?) {
         this.username = username
         this.email = email
@@ -22,7 +22,12 @@ class User {
         if (UUID != null) {
             db.collection("Users").document(UUID)
                 .set(user)
-                .addOnSuccessListener { Log.d("Main Activity", "DocumentSnapshot successfully written!") }
+                .addOnSuccessListener {
+                    Log.d(
+                        "Main Activity",
+                        "DocumentSnapshot successfully written!"
+                    )
+                }
                 .addOnFailureListener { e -> Log.w("Main Activity", "Error writing document", e) }
         }
     }

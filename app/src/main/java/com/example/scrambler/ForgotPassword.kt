@@ -40,9 +40,17 @@ class ForgotPassword : AppCompatActivity() {
         progessBar!!.visibility = View.VISIBLE
         auth!!.sendPasswordResetEmail(email).addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Toast.makeText(this@ForgotPassword, "Check your email to reset your password", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@ForgotPassword,
+                    "Check your email to reset your password",
+                    Toast.LENGTH_LONG
+                ).show()
             } else {
-                Toast.makeText(this@ForgotPassword, "Try again! Something went wrong!", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@ForgotPassword,
+                    "Try again! Something went wrong!",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             progessBar!!.visibility = View.GONE
         }

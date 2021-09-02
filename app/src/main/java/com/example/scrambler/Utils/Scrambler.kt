@@ -1,4 +1,5 @@
 package com.example.scrambler.Utils
+
 import android.app.Application
 
 

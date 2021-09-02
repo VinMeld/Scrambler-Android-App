@@ -88,6 +88,8 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
                                 val firebaseUser = FirebaseAuth.getInstance().currentUser
                                 val userID = firebaseUser!!.uid
                                 user.addUuid(userID)
+                                progressBar!!.visibility = View.GONE
+                                startActivity(Intent(this@RegisterUser, MainActivity::class.java))
                             } else {
                                 Toast.makeText(
                                     this@RegisterUser,

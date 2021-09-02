@@ -31,7 +31,8 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
         leaderboard!!.visibility = View.INVISIBLE
         globalLeaderboard!!.visibility = View.INVISIBLE
         scopeLeaderboard.launch(Dispatchers.Default) {
-            val userID =  (this@PersonalLeaderboardActivity.application as Scrambler).getCurrentUser()
+            val userID =
+                (this@PersonalLeaderboardActivity.application as Scrambler).getCurrentUser()
             val db = FirebaseFirestore.getInstance()
             val user = db.collection("Users")
             var personalLeaderboard = launch {
@@ -49,17 +50,21 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                     Log.e(TAG, "Personal Leaderboard $scores")
                                     val leaderboardText = StringBuilder()
                                     for (i in scores!!.indices) {
-                                        if(i < 10) {
-                                            if(scores!![i] != 0) {
+                                        if (i < 10) {
+                                            if (scores!![i] != 0) {
                                                 leaderboardText.append(i + 1).append(". ")
                                                     .append(scores!![i])
                                                     .append("\n")
                                             }
                                         }
                                     }
-                                    leaderboard!!.text = leaderboardText
+                                    runOnUiThread {
+                                        leaderboard!!.text = leaderboardText
+                                    }
                                 } else {
-                                    leaderboard!!.text = "You have not gotten any correct!"
+                                    runOnUiThread {
+                                        leaderboard!!.text = "You have not gotten any correct!"
+                                    }
                                 }
                             } else {
                                 Log.d(TAG, "No such document")
@@ -84,7 +89,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             val scores = mutableListOf<UserObject?>()
                             for (documents in userSnapShot) {
                                 (documents.get("scores") as MutableList<Int>?)?.forEachIndexed { _, score ->
-                                    if(score != 0){
+                                    if (score != 0) {
                                         val newEntry =
                                             UserObject(documents.get("username") as String, score)
                                         scores.add(newEntry)
@@ -102,11 +107,15 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             var leaderboardString = ""
                             Log.e(TAG, scores.toString())
                             (scores.forEachIndexed { index, scoreObj ->
-                                if(index < 10){
+                                if (index < 10) {
                                     leaderboardString += ((index + 1).toString() + ". " + scoreObj.toString() + "\n")
                                 }
                             })
-                            globalLeaderboard!!.text = leaderboardString
+                            if (leaderboardString == "") {
+                                leaderboardString = "You have not gotten any correct yet!"
+                            }
+                            runOnUiThread { globalLeaderboard!!.text = leaderboardString }
+
                         } else {
                             Log.d(TAG, "No such document")
                         }

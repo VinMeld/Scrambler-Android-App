@@ -3,8 +3,6 @@ package com.example.scrambler
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Contacts
-import android.provider.Contacts.Intents.UI
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -17,10 +15,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.Executors
+import android.os.StrictMode
+import android.os.StrictMode.ThreadPolicy
+import android.os.StrictMode.VmPolicy
 
-class GameActivity : AppCompatActivity(), View.OnClickListener {
+
+open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
-    var randomWordScrambled = ""
+    private var randomWordScrambled = ""
     private var correct = 0
     private var chances = 3
     private var seconds = 0
@@ -35,9 +37,24 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var textViewFlash: TextView? = null
     private var timerText: TextView? = null
     private var textViewHighScore: TextView? = null
-    var highscore = 0
-    val user1: MutableMap<String, Any?> = HashMap()
+    private var lastWord = ""
+    private var highscore = 0
+    private val user1: MutableMap<String, Any?> = HashMap()
     override fun onCreate(savedInstanceState: Bundle?) {
+        StrictMode.setThreadPolicy(
+            ThreadPolicy.Builder()
+            .detectDiskReads()
+            .detectDiskWrites()
+            .detectNetwork()   // or .detectAll() for all detectable problems
+            .penaltyLog()
+            .build())
+        StrictMode.setVmPolicy(
+            VmPolicy.Builder()
+            .detectLeakedSqlLiteObjects()
+            .detectLeakedClosableObjects()
+            .penaltyLog()
+            .penaltyDeath()
+            .build())
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
         menu = findViewById(R.id.buttonMenu)
@@ -50,7 +67,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         textViewFlash = findViewById(R.id.textViewFlash)
         timerText = findViewById(R.id.textViewTimer)
         textViewHighScore = findViewById(R.id.textViewHighScore)
-        getUserHighScore()
         runOnUiThread {
             timerText!!.visibility = View.INVISIBLE
             correctWords!!.text = correct.toString()
@@ -88,13 +104,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private fun correctProcedure() {
         correct++
         Log.e(TAG, "correct procedure $highscore : $correct")
-        if (highscore == correct) {
+        if (highscore + 1 == correct) {
             Log.e(TAG, "showing highscore")
             val newHighscore = CoroutineScope(CoroutineName("newHighscore"))
             newHighscore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val job1 = launch {
                     runOnUiThread {
-                        textViewHighScore!!.text = "You have reached a new high score!"
+                        textViewHighScore!!.text = "High Score!"
                         textViewHighScore!!.visibility = View.VISIBLE
                     }
                     delay(3000L)
@@ -111,12 +127,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
         runOnUiThread {
-            enterScramble!!.setText("")
+            enterScramble!!.text.clear()
             correctWords!!.text = correct.toString()
             textViewFlash!!.visibility = View.VISIBLE
             textViewFlash!!.text = "Correct!"
         }
-        // sleep(1000L)
         Log.e(TAG, "starting scramble from getting it right")
         startGame()
     }
@@ -138,12 +153,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         runOnUiThread {
             timerText!!.visibility = View.VISIBLE
         }
-        scopeTimer.launch(Dispatchers.Default) {
-            delay(100L)
+        scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            delay(1000L)
             val waitLength = 16
             val guess = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 // Wait for UI to actually change on screen.
-                delay(800L)
                 while (seconds < waitLength) {
                     runOnUiThread { timerText!!.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
@@ -151,7 +165,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     seconds += 1
                 }
             }
-            val wordCall = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val wordNumber = randomNumber(1, 1000)
                 // Instantiate the RequestQueue.
                 val queue = Volley.newRequestQueue(this@GameActivity)
@@ -160,21 +174,30 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 Log.e(TAG, "in word call")
                 val stringRequest = StringRequest(Request.Method.GET, url,
                     { stringResponse ->
+                        lastWord = word
                         val parts = stringResponse.split(":").toTypedArray()[1]
                         word = parts.split(",").toTypedArray()[0].replace("\"", "")
-                        Log.e(TAG, word)
-                        val arrayOfCharacters = word.toCharArray()
-                        while (word.contentEquals(String(arrayOfCharacters))) {
-                            for (index in 0 until arrayOfCharacters.size - 2) {
-                                val randomCharacter = randomNumber(0, arrayOfCharacters.size - 1)
-                                val randomMover = randomNumber(0, arrayOfCharacters.size - 1)
-                                val temp = arrayOfCharacters[randomCharacter]
-                                arrayOfCharacters[randomCharacter] = arrayOfCharacters[randomMover]
-                                arrayOfCharacters[randomMover] = temp
-                            }
-                        }
+                        val random = Random()
                         Log.e(TAG, "Resetting randomwordscramble")
-                        randomWordScrambled = String(arrayOfCharacters)
+                        val a: CharArray = word.toCharArray()
+                        for (i in a.indices) {
+                            val j: Int = random.nextInt(a.size)
+                            // Swap letters
+                            val temp = a[i]
+                            a[i] = a[j]
+                            a[j] = temp
+                        }
+                        randomWordScrambled = String(a)
+                        if (word.length == 1) {
+                            randomWordScrambled = word
+                        }
+                        seconds = 1
+                        // Display timer and set random word
+                        runOnUiThread {
+                            scrambledWord!!.text = randomWordScrambled
+                            textViewFlash!!.visibility = View.INVISIBLE
+                            timerText!!.visibility = View.VISIBLE
+                        }
                     },
                     { volleyError ->
                         // handle error
@@ -182,42 +205,48 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 )
                 queue.add(stringRequest)
+
             }
             // Wait for word to generate
-            while (word == "") {
-                Log.e(TAG, "waiting for word to not be empty: $word")
-                delay(500L)
-            }
-            delay(100L)
-            Log.e(TAG, "wordcall is complete $word")
+//            var test = false
+//            while (test && !wordCall.isCompleted) {
+//                if(word != ""){
+//                    Log.e(TAG, "word is not empty: $word")
+//                    test = true
+//                }
+//                Log.e(TAG, "waiting for word to not be empty: $word")
+//                delay(500L)
+//            }
+//
+//            while(word != lastWord && word == ""){
+//                Log.e(TAG,"Waiting for word to not be empty or last word")
+//                delay(1000L)
+//            }
+//            delay(100L)
+//            if(word == ""){
+//                Log.e(TAG, "word is not empty")
+//            }
+//            Log.e(TAG, "wordcall is complete $word")
 
-            // Display timer and set random word
-            val update = launch(Dispatchers.Main) {
-                runOnUiThread {
-                    scrambledWord!!.text = randomWordScrambled
-                    textViewFlash!!.visibility = View.INVISIBLE
-                    timerText!!.visibility = View.VISIBLE
-                }
-            }
-            while(scrambledWord!!.visibility != View.VISIBLE){
-                Log.e(TAG, "waiting for update to complete")
-                delay(100L)
-            }
-            // Set timer to 0
-            seconds = 1
-            Log.e(TAG, "Reset timer $seconds")
+
+//            while(scrambledWord!!.visibility != View.VISIBLE){
+//                Log.e(TAG, "waiting for update to complete")
+//                delay(100L)
+//            }
+//            Log.e(TAG, "Reset timer $seconds")
             // Wait for guess to be completed
             var correctBool = false
 
             while (!guess.isCompleted) {
-                delay(500L)
                 if (enterScramble!!.text.toString().lowercase().trim()
                         .contentEquals(word.lowercase())
+                    && word != ""
                 ) {
                     Log.e(TAG, "Correct")
                     correctBool = true
                     break
                 }
+                delay(500L)
             }
             when {
                 // If they got it right then cancel guess and restart
@@ -272,6 +301,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onResume() {
         getUserInformation()
+        getUserHighScore()
         Log.e(TAG, "on resume()")
         super.onResume()
     }
@@ -288,7 +318,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         var newScores = mutableListOf<Int>()
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e(TAG, "in user information")
-            val job1 = launch() {
+            val job1 = launch {
                 if (userID != null) {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
@@ -330,7 +360,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             var scores = user1["scores"]
             Log.e(TAG, "in get user highscore $scores")
             if (scores == 0) {
-                highscore = -1
+                highscore = -2
             } else if (scores is List<*>) {
                 val listScores: MutableList<Int> = scores as MutableList<Int>
                 val comparator: Comparator<Int> = Collections.reverseOrder()
@@ -348,7 +378,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val db = FirebaseFirestore.getInstance()
 
         scopeFirebaseAdd.launch(Dispatchers.Default) {
-            var job1 = launch() {
+            var job1 = launch {
                 getUserInformation()
             }
             while (!job1.isCompleted) {

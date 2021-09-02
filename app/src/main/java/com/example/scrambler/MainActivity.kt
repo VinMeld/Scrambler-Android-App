@@ -1,4 +1,5 @@
 package com.example.scrambler
+
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
@@ -57,22 +58,36 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 if (user!!.isEmailVerified) {
                     val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
                     val editorEmail = preferencesEmail.edit()
-                    editorEmail.putString("email", email);
+                    editorEmail.putString("email", email)
                     editorEmail.apply()
                     val preferencesPassword = getSharedPreferences("password", MODE_PRIVATE)
                     val editorPassword = preferencesPassword.edit()
-                    editorPassword.putString("password", password);
+                    editorPassword.putString("password", password)
                     editorPassword.apply()
                     startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                 } else {
                     user.sendEmailVerification()
-                    Toast.makeText(this@MainActivity, "Check your email to verify your account!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Check your email to verify your account!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    progressBar!!.visibility = View.GONE
                 }
             } else {
-                Toast.makeText(this@MainActivity, "Failed to login please. Please check your credentials", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@MainActivity,
+                    "Failed to login please. Please check your credentials",
+                    Toast.LENGTH_SHORT
+                ).show()
                 progressBar!!.visibility = View.GONE
             }
         }
+    }
+
+    override fun onPause() {
+        progressBar!!.visibility = View.GONE
+        super.onPause()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,30 +111,27 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val email = preferencesEmail.getString("email", "")
         val preferencesPassword = getSharedPreferences("password", MODE_PRIVATE)
         val password = preferencesPassword.getString("password", "")
-        if(checkbox.equals("true") && email != null && password != null){
-                mAuth!!.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val user = FirebaseAuth.getInstance().currentUser
-                        if (user != null) {
-                            (this.application as Scrambler).setCurrentUser(user.uid)
-                            startActivity(Intent(this@MainActivity, MenuActivity::class.java))
-                        }
+        if (checkbox.equals("true") && email != null && password != null) {
+            mAuth!!.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = FirebaseAuth.getInstance().currentUser
+                    if (user != null) {
+                        (this.application as Scrambler).setCurrentUser(user.uid)
+                        startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                     }
                 }
-        } else if(checkbox.equals("false")) {
+            }
+        } else if (checkbox.equals("false")) {
             Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
         }
         remember?.setOnCheckedChangeListener { buttonView, _ ->
-            if(buttonView.isChecked){
-                val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
-                val editor = preferences.edit()
-                editor.putString("remember", "true");
-                editor.apply()
+            if (buttonView.isChecked) {
+                getSharedPreferences("checkbox", MODE_PRIVATE).edit().putString("remember", "true")
+                    .apply()
                 Toast.makeText(this, "Remember Me Checked", Toast.LENGTH_SHORT).show()
-            } else if(!buttonView.isChecked){
-                val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
-                val editor = preferences.edit()
-                editor.putString("remember", "false");
+            } else if (!buttonView.isChecked) {
+                val editor = getSharedPreferences("checkbox", MODE_PRIVATE).edit()
+                editor.putString("remember", "false")
                 editor.apply()
                 Toast.makeText(this, "Remember Me Unchecked", Toast.LENGTH_SHORT).show()
             }
