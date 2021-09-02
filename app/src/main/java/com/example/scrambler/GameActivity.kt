@@ -13,7 +13,6 @@ import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
 import com.example.scrambler.Utils.Scrambler
 import kotlinx.coroutines.*
-import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.Executors
 
@@ -24,6 +23,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var chances = 3
     private var seconds = 0
     private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
+    private val getUser = CoroutineScope(CoroutineName("getUser"))
     private var menu: Button? = null
     private var correctWords: TextView? = null
     private var scrambledWord: TextView? = null
@@ -32,6 +32,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var buttonRestart: Button? = null
     private var textViewFlash: TextView? = null
     private var timerText: TextView? = null
+    private var textViewHighScore: TextView? = null
+    var highscore = 0
+    val user1: MutableMap<String, Any?> = HashMap()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -44,6 +47,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         buttonRestart = findViewById(R.id.buttonRestart)
         textViewFlash = findViewById(R.id.textViewFlash)
         timerText = findViewById(R.id.textViewTimer)
+        textViewHighScore = findViewById(R.id.textViewHighScore)
+        getUserHighScore()
         runOnUiThread {
             timerText!!.visibility = View.INVISIBLE
             correctWords!!.text = correct.toString()
@@ -61,6 +66,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 )
                 toast.show()
             } else {
+                getUserHighScore()
                 chances = 3
                 correct = 0
                 seconds = 1
@@ -79,13 +85,26 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun correctProcedure() {
         correct++
+        if(highscore - correct in 1..3){
+            runOnUiThread {
+                textViewHighScore!!.text = "You are only $highscore away from your highscore!"
+                if(textViewHighScore!!.visibility != View.VISIBLE){
+                    textViewHighScore!!.visibility != View.VISIBLE
+                }
+            }
+        } else {
+            runOnUiThread {
+                textViewHighScore!!.visibility != View.INVISIBLE
+            }
+        }
         runOnUiThread {
             enterScramble!!.setText("")
             correctWords!!.text = correct.toString()
             textViewFlash!!.visibility = View.VISIBLE
             textViewFlash!!.text = "Correct!"
+
         }
-        sleep(1000L)
+        // sleep(1000L)
         Log.e(TAG, "starting scramble from getting it right")
         startGame()
     }
@@ -172,7 +191,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             var correctBool = false
             while (!guess.isCompleted) {
                 delay(500L)
-                if (enterScramble!!.text.toString().lowercase().trim().contentEquals(word.lowercase())) {
+                if (enterScramble!!.text.toString().lowercase().trim()
+                        .contentEquals(word.lowercase())
+                ) {
                     Log.e(TAG, "Correct")
                     correctBool = true
                     break
@@ -194,6 +215,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         textViewFlash!!.visibility = View.VISIBLE
                         textViewChances!!.text = chances.toString()
                         enterScramble!!.visibility = View.INVISIBLE
+                        textViewHighScore!!.visibility = View.INVISIBLE
                     }
                     addToDatabase()
                     runOnUiThread { textViewChances!!.text = chances.toString() }
@@ -219,7 +241,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onPause() {
         Log.e(TAG, "in pause()")
-        if(chances != 0 ){
+        if (chances != 0) {
             addToDatabase()
         }
         runBlocking {
@@ -232,23 +254,21 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         private const val TAG = "GameActivity"
     }
 
-    private fun addToDatabase() {
-        val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
-        scopeFirebaseAdd.launch(Dispatchers.Default) {
-            val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
-            val db = FirebaseFirestore.getInstance()
-            val user = db.collection("Users")
-            val user1: MutableMap<String, Any?> = HashMap()
+    private fun getUserInformation() {
+        val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
+        val db = FirebaseFirestore.getInstance()
+        val user = db.collection("Users")
+        var username = ""
+        var newScores = mutableListOf<Int>()
+        getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             val job1 = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 if (userID != null && correct != 0) {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
-                            val username = document["username"]
-                            val scores = document["scores"]
+                            username = document["username"] as String
+                            var scores = document["scores"]
                             if (scores != null) {
-                                scores::class.simpleName?.let { Log.e(TAG, it) }
-                                val newScores = scores as MutableList<Int>?
-                                newScores?.add(correct)
+                                newScores = (scores as MutableList<Int>?)!!
                                 user1["username"] = username
                                 user1["scores"] = newScores
                                 Log.e(TAG, "trying for multiple scores")
@@ -262,6 +282,49 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             while (!job1.isCompleted) {
+                delay(1000L)
+            }
+        }
+    }
+    private fun getUserHighScore() {
+        val getHighScore = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+        getHighScore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()){
+            var job1 = launch(){
+                getUserInformation()
+            }
+            while(!job1.isCompleted && user1["scores"] != null) {
+                Log.e(TAG, "waiitng for user1 to not be null ?")
+                delay(1000L)
+            }
+
+            var scores = user1["scores"]
+            Log.e(TAG, "in get user highscore $scores")
+
+            if(scores == 0) {
+                highscore = 5
+            } else if(scores is List<*>){
+                val listScores: MutableList<Long> = scores as MutableList<Long>
+                val comparator: Comparator<Long> = Collections.reverseOrder()
+                Collections.sort(listScores, comparator)
+                // Log.e(TAG, "List scores $listScores first one " + listScores[0])
+                highscore = listScores[0].toInt()
+                Log.e(TAG, "Highest score $highscore")
+            }
+            }
+        }
+
+    private fun addToDatabase() {
+        val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+        val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
+        val db = FirebaseFirestore.getInstance()
+        var scores = user1["scores"] as MutableList<Int>
+        scores.add(correct)
+        user1["scores"] = scores
+        scopeFirebaseAdd.launch(Dispatchers.Default) {
+            var job1 = launch(){
+                getUserInformation()
+            }
+            while(!job1.isCompleted){
                 delay(1000L)
             }
             if (user1["username"] != null && userID != null) {
