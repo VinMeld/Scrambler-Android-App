@@ -1,18 +1,16 @@
 package com.example.scrambler
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.widget.TextView
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.example.scrambler.Utils.Scrambler
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
-import java.lang.StringBuilder
 import java.util.*
 
 class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {

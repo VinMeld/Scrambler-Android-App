@@ -2,9 +2,7 @@ package com.example.scrambler
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.android.gms.tasks.OnFailureListener
-import java.util.HashMap
+import java.util.*
 
 class User {
     var username: String? = null

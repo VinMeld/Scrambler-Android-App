@@ -1,17 +1,17 @@
 package com.example.scrambler
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import com.google.firebase.auth.FirebaseAuth
 import android.content.Intent
+import android.os.Bundle
 import android.widget.Button
-import com.google.firebase.database.FirebaseDatabase
 import android.widget.TextView
-import com.google.firebase.database.ValueEventListener
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.example.scrambler.Utils.Scrambler
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import android.widget.Toast
-import com.example.scrambler.Utils.Scrambler
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.lang.Thread.sleep
 
 class ProfileActivity : AppCompatActivity() {

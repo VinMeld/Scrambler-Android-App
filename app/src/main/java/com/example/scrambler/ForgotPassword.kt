@@ -1,16 +1,14 @@
 package com.example.scrambler
 
-import androidx.appcompat.app.AppCompatActivity
-import android.widget.EditText
-import android.widget.ProgressBar
-import com.google.firebase.auth.FirebaseAuth
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.Button
-import com.example.scrambler.R
-import com.google.android.gms.tasks.OnCompleteListener
+import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 
 class ForgotPassword : AppCompatActivity() {
     private var emailEditText: EditText? = null

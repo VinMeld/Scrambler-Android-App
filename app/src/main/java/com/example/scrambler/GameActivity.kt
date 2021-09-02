@@ -1,17 +1,19 @@
 package com.example.scrambler
 
 import android.annotation.SuppressLint
-import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.firestore.FirebaseFirestore
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
+import android.provider.Contacts
+import android.provider.Contacts.Intents.UI
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
-import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.scrambler.Utils.Scrambler
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.Executors
@@ -85,12 +87,23 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun correctProcedure() {
         correct++
-        if(highscore - correct in 1..3){
-            runOnUiThread {
-                textViewHighScore!!.text = "You are only $highscore away from your highscore!"
-                if(textViewHighScore!!.visibility != View.VISIBLE){
-                    textViewHighScore!!.visibility != View.VISIBLE
+        Log.e(TAG, "correct procedure $highscore : $correct")
+        if (highscore == correct) {
+            Log.e(TAG, "showing highscore")
+            val newHighscore = CoroutineScope(CoroutineName("newHighscore"))
+            newHighscore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                val job1 = launch {
+                    runOnUiThread {
+                        textViewHighScore!!.text = "You have reached a new high score!"
+                        textViewHighScore!!.visibility = View.VISIBLE
+                    }
+                    delay(3000L)
+                    runOnUiThread {
+                        textViewHighScore!!.text = ""
+                        textViewHighScore!!.visibility = View.INVISIBLE
+                    }
                 }
+                job1.join()
             }
         } else {
             runOnUiThread {
@@ -102,7 +115,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             correctWords!!.text = correct.toString()
             textViewFlash!!.visibility = View.VISIBLE
             textViewFlash!!.text = "Correct!"
-
         }
         // sleep(1000L)
         Log.e(TAG, "starting scramble from getting it right")
@@ -172,23 +184,31 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 queue.add(stringRequest)
             }
             // Wait for word to generate
-            while (!wordCall.isCompleted) {
+            while (word == "") {
+                Log.e(TAG, "waiting for word to not be empty: $word")
                 delay(500L)
             }
             delay(100L)
-            Log.e(TAG, "wordcall is complete")
+            Log.e(TAG, "wordcall is complete $word")
 
             // Display timer and set random word
-            runOnUiThread {
-                scrambledWord!!.text = randomWordScrambled
-                textViewFlash!!.visibility = View.INVISIBLE
-                timerText!!.visibility = View.VISIBLE
+            val update = launch(Dispatchers.Main) {
+                runOnUiThread {
+                    scrambledWord!!.text = randomWordScrambled
+                    textViewFlash!!.visibility = View.INVISIBLE
+                    timerText!!.visibility = View.VISIBLE
+                }
+            }
+            while(scrambledWord!!.visibility != View.VISIBLE){
+                Log.e(TAG, "waiting for update to complete")
+                delay(100L)
             }
             // Set timer to 0
             seconds = 1
             Log.e(TAG, "Reset timer $seconds")
             // Wait for guess to be completed
             var correctBool = false
+
             while (!guess.isCompleted) {
                 delay(500L)
                 if (enterScramble!!.text.toString().lowercase().trim()
@@ -250,6 +270,12 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         super.onPause()
     }
 
+    override fun onResume() {
+        getUserInformation()
+        Log.e(TAG, "on resume()")
+        super.onResume()
+    }
+
     companion object {
         private const val TAG = "GameActivity"
     }
@@ -261,13 +287,15 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         var username = ""
         var newScores = mutableListOf<Int>()
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-            val job1 = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                if (userID != null && correct != 0) {
+            Log.e(TAG, "in user information")
+            val job1 = launch() {
+                if (userID != null) {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
                             username = document["username"] as String
                             var scores = document["scores"]
                             if (scores != null) {
+                                Log.e(TAG, "Setting user information")
                                 newScores = (scores as MutableList<Int>?)!!
                                 user1["username"] = username
                                 user1["scores"] = newScores
@@ -281,53 +309,55 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
-            while (!job1.isCompleted) {
+            while (!job1.isCompleted && user1.isEmpty()) {
+                Log.e(TAG, "waiting for username to not be null")
                 delay(1000L)
             }
+            Log.e(TAG, "user 1 is not null : $user1")
         }
     }
+
     private fun getUserHighScore() {
         val getHighScore = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
-        getHighScore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()){
-            var job1 = launch(){
-                getUserInformation()
-            }
-            while(!job1.isCompleted && user1["scores"] != null) {
-                Log.e(TAG, "waiitng for user1 to not be null ?")
+        getHighScore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            getUserInformation()
+
+            while (user1["scores"] == null) {
+                Log.e(TAG, "waiting for user1 to not be null ? $user1")
                 delay(1000L)
             }
 
             var scores = user1["scores"]
             Log.e(TAG, "in get user highscore $scores")
-
-            if(scores == 0) {
-                highscore = 5
-            } else if(scores is List<*>){
-                val listScores: MutableList<Long> = scores as MutableList<Long>
-                val comparator: Comparator<Long> = Collections.reverseOrder()
+            if (scores == 0) {
+                highscore = -1
+            } else if (scores is List<*>) {
+                val listScores: MutableList<Int> = scores as MutableList<Int>
+                val comparator: Comparator<Int> = Collections.reverseOrder()
                 Collections.sort(listScores, comparator)
                 // Log.e(TAG, "List scores $listScores first one " + listScores[0])
                 highscore = listScores[0].toInt()
                 Log.e(TAG, "Highest score $highscore")
             }
-            }
         }
+    }
 
     private fun addToDatabase() {
         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
         val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
         val db = FirebaseFirestore.getInstance()
-        var scores = user1["scores"] as MutableList<Int>
-        scores.add(correct)
-        user1["scores"] = scores
+
         scopeFirebaseAdd.launch(Dispatchers.Default) {
-            var job1 = launch(){
+            var job1 = launch() {
                 getUserInformation()
             }
-            while(!job1.isCompleted){
+            while (!job1.isCompleted) {
                 delay(1000L)
             }
-            if (user1["username"] != null && userID != null) {
+            if (user1["username"] != null && userID != null && correct != 0) {
+                var scores = user1["scores"] as MutableList<Int>
+                scores.add(correct)
+                user1["scores"] = scores
                 Log.e(TAG, user1.toString())
                 db.collection("Users").document(userID)
                     .set(user1)

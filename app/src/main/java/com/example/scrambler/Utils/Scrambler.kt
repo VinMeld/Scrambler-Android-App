@@ -1,6 +1,5 @@
 package com.example.scrambler.Utils
 import android.app.Application
-import com.example.scrambler.User
 
 
 class Scrambler : Application() {
