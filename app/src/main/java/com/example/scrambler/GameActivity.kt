@@ -357,17 +357,26 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 delay(1000L)
             }
 
-            var scores = user1["scores"]
+            val scores = user1["scores"]
             Log.e(TAG, "in get user highscore $scores")
             if (scores == 0) {
                 highscore = -2
             } else if (scores is List<*>) {
-                val listScores: MutableList<Int> = scores as MutableList<Int>
-                val comparator: Comparator<Int> = Collections.reverseOrder()
-                Collections.sort(listScores, comparator)
-                // Log.e(TAG, "List scores $listScores first one " + listScores[0])
-                highscore = listScores[0].toInt()
-                Log.e(TAG, "Highest score $highscore")
+                try {
+                    val listScores: MutableList<Int> = scores as MutableList<Int>
+                    val comparator: Comparator<Int> = Collections.reverseOrder()
+                    Collections.sort(listScores, comparator)
+                    // Log.e(TAG, "List scores $listScores first one " + listScores[0])
+                    highscore = listScores[0].toInt()
+                    Log.e(TAG, "Highest score $highscore")
+                } catch(e: ClassCastException){
+                    Log.e(TAG, "Class exception Long $e")
+                    val listScores: MutableList<Long> = scores as MutableList<Long>
+                    listScores.reverse();
+                    // Log.e(TAG, "List scores $listScores first one " + listScores[0])
+                    highscore = listScores[0].toInt()
+                    Log.e(TAG, "Highest score $highscore")
+                }
             }
         }
     }

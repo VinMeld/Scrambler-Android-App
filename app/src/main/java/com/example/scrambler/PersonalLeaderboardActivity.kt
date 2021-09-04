@@ -58,6 +58,9 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                             }
                                         }
                                     }
+                                    if (leaderboardText.isEmpty()) {
+                                        leaderboardText.append("Nobody has gotten any correct!")
+                                    }
                                     runOnUiThread {
                                         leaderboard!!.text = leaderboardText
                                     }
@@ -112,7 +115,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                 }
                             })
                             if (leaderboardString == "") {
-                                leaderboardString = "You have not gotten any correct yet!"
+                                leaderboardString = "Nobody has gotten any correct!"
                             }
                             runOnUiThread { globalLeaderboard!!.text = leaderboardString }
 

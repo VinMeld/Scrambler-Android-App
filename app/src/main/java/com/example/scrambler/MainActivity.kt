@@ -2,6 +2,7 @@ package com.example.scrambler
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.*
@@ -108,10 +109,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
         val checkbox = preferences.getString("remember", "")
         val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
-        val email = preferencesEmail.getString("email", "")
+        val email = preferencesEmail.getString("email", "").toString()
         val preferencesPassword = getSharedPreferences("password", MODE_PRIVATE)
-        val password = preferencesPassword.getString("password", "")
-        if (checkbox.equals("true") && email != null && password != null) {
+        val password = preferencesPassword.getString("password", "").toString()
+
+        if (checkbox.equals("true") && email != "" && password != "") {
             mAuth!!.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = FirebaseAuth.getInstance().currentUser
@@ -121,6 +123,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
+            Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
         } else if (checkbox.equals("false")) {
             Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
         }

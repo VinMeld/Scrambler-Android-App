@@ -2,6 +2,7 @@ package com.example.scrambler
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.EditText
@@ -11,6 +12,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.*
+import java.util.concurrent.Executors
 
 class RegisterUser : AppCompatActivity(), View.OnClickListener {
     private var banner: TextView? = null
@@ -42,6 +46,7 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun registerUser() {
+        var finished = false
         val email = editTextEmail!!.text.toString().trim { it <= ' ' }
         val username = editTUsername!!.text.toString().trim { it <= ' ' }
         val password = editTextPassword!!.text.toString().trim { it <= ' ' }
@@ -70,43 +75,94 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
             editTextPassword!!.requestFocus()
             return
         }
-        progressBar!!.visibility = View.VISIBLE
-        mAuth!!.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    println("$username $email")
-                    val user = User(username, email)
-                    FirebaseDatabase.getInstance().getReference("Users")
-                        .child(FirebaseAuth.getInstance().currentUser!!.uid)
-                        .setValue(user).addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Toast.makeText(
-                                    this@RegisterUser,
-                                    "User has been registered successfully!",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                val firebaseUser = FirebaseAuth.getInstance().currentUser
-                                val userID = firebaseUser!!.uid
-                                user.addUuid(userID)
-                                progressBar!!.visibility = View.GONE
-                                startActivity(Intent(this@RegisterUser, MainActivity::class.java))
-                            } else {
-                                Toast.makeText(
-                                    this@RegisterUser,
-                                    "Failed to register! Try again!",
-                                    Toast.LENGTH_LONG
-                                ).show()
+            val db = FirebaseFirestore.getInstance()
+            val user = db.collection("Users")
+            val getUser = CoroutineScope(CoroutineName("getUser"))
+            getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                Log.e("RegisterUser", "in user information")
+                val job1 = launch {
+                    user.get().addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val userSnapShot = task.result
+                            var isUnique = true
+                            if (userSnapShot != null) {
+                                for (i in userSnapShot) {
+                                    if (i.get("username") as String == username) {
+                                        isUnique = false
+                                        Log.e("Register User", "It is not unique!! $username + " + i.get("username"))
+                                    }
+                                }
                             }
-                            progressBar!!.visibility = View.GONE
+                            if (isUnique) {
+                                progressBar!!.visibility = View.VISIBLE
+                                mAuth!!.createUserWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener { task1 ->
+                                        if (task1.isSuccessful) {
+                                            println("$username $email")
+                                            val user = User(username, email)
+                                            FirebaseDatabase.getInstance().getReference("Users")
+                                                .child(FirebaseAuth.getInstance().currentUser!!.uid)
+                                                .setValue(user).addOnCompleteListener { task ->
+                                                    if (task.isSuccessful) {
+                                                        Toast.makeText(
+                                                            this@RegisterUser,
+                                                            "User has been registered successfully!",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                        val firebaseUser =
+                                                            FirebaseAuth.getInstance().currentUser
+                                                        val userID = firebaseUser!!.uid
+                                                        user.addUuid(userID)
+                                                        progressBar!!.visibility = View.GONE
+                                                        startActivity(
+                                                            Intent(
+                                                                this@RegisterUser,
+                                                                MainActivity::class.java
+                                                            )
+                                                        )
+                                                        finished = true
+                                                    } else {
+                                                        Toast.makeText(
+                                                            this@RegisterUser,
+                                                            "Failed to register! Try again!",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                        finished = true
+                                                    }
+                                                    progressBar!!.visibility = View.GONE
+                                                }
+                                        } else {
+                                            Toast.makeText(
+                                                this@RegisterUser,
+                                                "Failed to register! Try again!",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            progressBar!!.visibility = View.GONE
+                                            finished = true
+                                        }
+                                    }.addOnFailureListener { exception ->
+                                        Log.d("RegisterUser", "get failed with ", exception)
+                                }
+                            } else {
+                                Log.d("RegisterUser", "No such document")
+                                Toast.makeText(
+                                    this@RegisterUser,
+                                    "Username taken! Try again!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                finished = true
+                            }
                         }
-                } else {
-                    Toast.makeText(
-                        this@RegisterUser,
-                        "Failed to register! Try again!",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    progressBar!!.visibility = View.GONE
+                        }
+                    }
+
+                while (!job1.isCompleted && !finished) {
+                    Log.e("ProfileActivity.TAG", "waiting for username to not be null")
+                    delay(1000L)
                 }
+                Log.e("RegisterUser", "user 1 is not null : $username")
             }
+        }
+
+
     }
-}

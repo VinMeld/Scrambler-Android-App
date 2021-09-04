@@ -87,7 +87,7 @@ class ProfileActivity : AppCompatActivity() {
                 startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
             }
         }
-        logout.setOnClickListener {
+        logout?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
             val editor = preferences.edit()
@@ -118,13 +118,12 @@ class ProfileActivity : AppCompatActivity() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val userProfile = snapshot.getValue(User::class.java)
                     if (userProfile != null) {
-
                         val username = userProfile.username
                         val email = userProfile.email
                         runOnUiThread {
-                            emailTextView.text = email
-                            greetingTextView.text = "Welcome $username"
-                            usernameTextView.text = username
+                            emailTextView?.text = email
+                            greetingTextView?.text = "Welcome $username"
+                            usernameTextView?.text = username
                         }
                     }
                 }
