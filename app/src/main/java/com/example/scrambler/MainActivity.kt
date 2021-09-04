@@ -2,7 +2,6 @@ package com.example.scrambler
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.*
@@ -18,6 +17,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var mAuth: FirebaseAuth? = null
     private var progressBar: ProgressBar? = null
     private var remember: CheckBox? = null
+    private var register: TextView? = null
     override fun onClick(v: View) {
         when (v.id) {
             R.id.textRegister -> startActivity(Intent(this, RegisterUser::class.java))
@@ -94,8 +94,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val register = findViewById<TextView>(R.id.textRegister)
-        register.setOnClickListener(this)
+        register = findViewById(R.id.textRegister)
+        register?.setOnClickListener(this)
         signIn = findViewById(R.id.buttonLogin)
         signIn?.setOnClickListener(this)
         editTextEmail = findViewById(R.id.textEmail)
@@ -123,7 +123,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
-            Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
         } else if (checkbox.equals("false")) {
             Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
         }
