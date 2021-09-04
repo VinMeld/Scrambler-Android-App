@@ -18,7 +18,8 @@ import java.util.concurrent.Executors
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.os.StrictMode.VmPolicy
-
+import java.io.File
+import java.io.InputStream
 
 open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
@@ -40,7 +41,11 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var lastWord = ""
     private var highscore = 0
     private val user1: MutableMap<String, Any?> = HashMap()
+    private val api_key = "d8fe5205-e502-4bec-b7cd-8152115b2162"
     override fun onCreate(savedInstanceState: Bundle?) {
+//        val inputStream: InputStream = File(".api_key.txt").inputStream()
+//        val api_key = inputStream.bufferedReader().use { it.readText() }
+       // println(api_key)
         StrictMode.setThreadPolicy(
             ThreadPolicy.Builder()
             .detectDiskReads()
@@ -207,43 +212,44 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 queue.add(stringRequest)
 
             }
-            // Wait for word to generate
-//            var test = false
-//            while (test && !wordCall.isCompleted) {
-//                if(word != ""){
-//                    Log.e(TAG, "word is not empty: $word")
-//                    test = true
-//                }
-//                Log.e(TAG, "waiting for word to not be empty: $word")
-//                delay(500L)
-//            }
-//
-//            while(word != lastWord && word == ""){
-//                Log.e(TAG,"Waiting for word to not be empty or last word")
-//                delay(1000L)
-//            }
-//            delay(100L)
-//            if(word == ""){
-//                Log.e(TAG, "word is not empty")
-//            }
-//            Log.e(TAG, "wordcall is complete $word")
-
-
-//            while(scrambledWord!!.visibility != View.VISIBLE){
-//                Log.e(TAG, "waiting for update to complete")
-//                delay(100L)
-//            }
-//            Log.e(TAG, "Reset timer $seconds")
-            // Wait for guess to be completed
             var correctBool = false
 
             while (!guess.isCompleted) {
-                if (enterScramble!!.text.toString().lowercase().trim()
-                        .contentEquals(word.lowercase())
-                    && word != ""
-                ) {
-                    Log.e(TAG, "Correct")
-                    correctBool = true
+                if(enterScramble!!.text.toString().trim().length == word.length ) {
+                    if (sameChars(
+                            enterScramble!!.text.toString().trim().lowercase(),
+                            word.lowercase()
+                        )
+                    ) {
+                        val queue = Volley.newRequestQueue(this@GameActivity)
+                        val enteredWord = enterScramble!!.text.toString().trim()
+                        val url =
+                            "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$api_key"
+                        val stringRequest = StringRequest(Request.Method.GET, url,
+                            { stringResponse ->
+                                Log.e(TAG, stringResponse)
+                                if (stringResponse.contains("meta")) {
+                                    Log.e(TAG, "Guessed a correct word from webster")
+                                    correctBool = true
+                                    if (enterScramble!!.text.toString().lowercase().trim()
+                                            .contentEquals(word.lowercase())
+                                        && word != ""
+                                    ) {
+                                        Log.e(TAG, "Correct")
+                                        correctBool = true
+                                    }
+                                }
+                            },
+                            { volleyError ->
+                                // handle error
+                                Log.e(TAG, "Error in getting word $volleyError")
+                            }
+                        )
+                        queue.add(stringRequest)
+
+                    }
+                }
+                if(correctBool){
                     break
                 }
                 delay(500L)
@@ -287,7 +293,13 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
-
+    private fun sameChars(firstStr: String, secondStr: String): Boolean {
+        val first = firstStr.toCharArray()
+        val second = secondStr.toCharArray()
+        Arrays.sort(first)
+        Arrays.sort(second)
+        return first.contentEquals(second)
+    }
     override fun onPause() {
         Log.e(TAG, "in pause()")
         if (chances != 0) {
