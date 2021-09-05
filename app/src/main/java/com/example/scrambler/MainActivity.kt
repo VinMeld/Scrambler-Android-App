@@ -105,8 +105,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         forgotPassword = findViewById(R.id.textForgot)
         forgotPassword?.setOnClickListener(this)
         remember = findViewById(R.id.checkBox)
-        editTextEmail?.setText("vinaymeldrum@gmail.com")
-        editTextPassword?.setText("vinay123")
         val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
         val checkbox = preferences.getString("remember", "")
         val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
