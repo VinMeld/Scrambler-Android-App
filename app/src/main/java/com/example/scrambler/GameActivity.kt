@@ -15,13 +15,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.Executors
-import android.os.StrictMode
-import android.os.StrictMode.ThreadPolicy
-import android.os.StrictMode.VmPolicy
-import java.io.File
-import java.io.InputStream
-
-open class GameActivity : AppCompatActivity(), View.OnClickListener {
+class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
     private var randomWordScrambled = ""
     private var correct = 0
@@ -41,37 +35,21 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var lastWord = ""
     private var highscore = 0
     private val user1: MutableMap<String, Any?> = HashMap()
-    private val api_key = "d8fe5205-e502-4bec-b7cd-8152115b2162"
+    private var apiKey : String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
-//        val inputStream: InputStream = File(".api_key.txt").inputStream()
-//        val api_key = inputStream.bufferedReader().use { it.readText() }
-       // println(api_key)
-        StrictMode.setThreadPolicy(
-            ThreadPolicy.Builder()
-            .detectDiskReads()
-            .detectDiskWrites()
-            .detectNetwork()   // or .detectAll() for all detectable problems
-            .penaltyLog()
-            .build())
-        StrictMode.setVmPolicy(
-            VmPolicy.Builder()
-            .detectLeakedSqlLiteObjects()
-            .detectLeakedClosableObjects()
-            .penaltyLog()
-            .penaltyDeath()
-            .build())
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
         menu = findViewById(R.id.buttonMenu)
         menu?.setOnClickListener(this)
         correctWords = findViewById(R.id.textViewCorrect)
         scrambledWord = findViewById(R.id.textWord)
-        enterScramble = findViewById(R.id.textViewWord)
+        enterScramble = findViewById(R.id.textEditWord)
         textViewChances = findViewById(R.id.textViewChances)
         buttonRestart = findViewById(R.id.buttonRestart)
         textViewFlash = findViewById(R.id.textViewFlash)
         timerText = findViewById(R.id.textViewTimer)
         textViewHighScore = findViewById(R.id.textViewHighScore)
+        apiKey = getString(R.string.parse_application_id)
         runOnUiThread {
             timerText!!.visibility = View.INVISIBLE
             correctWords!!.text = correct.toString()
@@ -80,7 +58,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         Log.e(TAG, "starting scramble from creation")
         startGame()
         // RESTART BUTTON
-        buttonRestart!!.setOnClickListener {
+        buttonRestart?.setOnClickListener {
             if (chances > 0) {
                 val toast = Toast.makeText(
                     applicationContext,
@@ -143,7 +121,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onClick(v: View) {
         when (v.id) {
-            R.id.buttonMenu -> startActivity(Intent(this, MenuActivity::class.java))
+            R.id.buttonMenu -> startActivity(Intent(this@GameActivity, MenuActivity::class.java))
         }
     }
 
@@ -210,7 +188,6 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 )
                 queue.add(stringRequest)
-
             }
             var correctBool = false
 
@@ -224,7 +201,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                         val queue = Volley.newRequestQueue(this@GameActivity)
                         val enteredWord = enterScramble!!.text.toString().trim()
                         val url =
-                            "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$api_key"
+                            "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
                         val stringRequest = StringRequest(Request.Method.GET, url,
                             { stringResponse ->
                                 Log.e(TAG, stringResponse)
@@ -335,7 +312,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
                             username = document["username"] as String
-                            var scores = document["scores"]
+                            val scores = document["scores"]
                             if (scores != null) {
                                 Log.e(TAG, "Setting user information")
                                 newScores = (scores as MutableList<Int>?)!!

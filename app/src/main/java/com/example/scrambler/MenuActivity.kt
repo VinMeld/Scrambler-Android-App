@@ -16,9 +16,9 @@ class MenuActivity : AppCompatActivity() {
         val game = findViewById<Button>(R.id.buttonStart)
         val profile = findViewById<Button>(R.id.buttonProfile)
         val leaderboard = findViewById<Button>(R.id.buttonLeaderboard)
+        val practice = findViewById<Button>(R.id.buttonPractice)
         game.setOnClickListener {
             startActivity(Intent(this@MenuActivity, GameActivity::class.java))
-
         }
         profile.setOnClickListener {
             startActivity(
@@ -33,6 +33,14 @@ class MenuActivity : AppCompatActivity() {
                 Intent(
                     this@MenuActivity,
                     PersonalLeaderboardActivity::class.java
+                )
+            )
+        }
+        practice.setOnClickListener{
+            startActivity(
+                Intent(
+                    this@MenuActivity,
+                    PracticeActivity::class.java
                 )
             )
         }
