@@ -1,9 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.gms.google-services'
-def apikeyPropertiesFile = rootProject.file("apikey.properties")
-def apikeyProperties = new Properties()
-apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
 
 android {
     compileSdkVersion 31
@@ -17,9 +14,6 @@ android {
         versionName "1.0"
         resConfigs("en", "fr")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // should correspond to key/value pairs inside the file
-        buildConfigField("String", "CONSUMER_KEY", apikeyProperties['CONSUMER_KEY'])
-        buildConfigField("String", "CONSUMER_SECRET", apikeyProperties['CONSUMER_SECRET'])
     }
     buildTypes {
         getByName("release") {
