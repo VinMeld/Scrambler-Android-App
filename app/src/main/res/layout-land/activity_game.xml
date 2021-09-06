@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/textViewHighScore"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="10dp"
         android:text="@string/loading"
         android:textSize="34sp" />
 

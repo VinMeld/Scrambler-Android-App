@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     user.sendEmailVerification()
                     Toast.makeText(
                         this@MainActivity,
-                        "Check your email to verify your account!",
+                        getString(R.string.verify_email_toast),
                         Toast.LENGTH_LONG
                     ).show()
                     progressBar!!.visibility = View.GONE
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             } else {
                 Toast.makeText(
                     this@MainActivity,
-                    "Failed to login please. Please check your credentials",
+                    getString(R.string.incorrect_login_toast),
                     Toast.LENGTH_SHORT
                 ).show()
                 progressBar!!.visibility = View.GONE
@@ -122,19 +122,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
-        } else if (checkbox.equals("false")) {
-            Toast.makeText(this, "Please Sign In", Toast.LENGTH_SHORT).show()
         }
         remember?.setOnCheckedChangeListener { buttonView, _ ->
             if (buttonView.isChecked) {
                 getSharedPreferences("checkbox", MODE_PRIVATE).edit().putString("remember", "true")
                     .apply()
-                Toast.makeText(this, "Remember Me Checked", Toast.LENGTH_SHORT).show()
             } else if (!buttonView.isChecked) {
                 val editor = getSharedPreferences("checkbox", MODE_PRIVATE).edit()
                 editor.putString("remember", "false")
                 editor.apply()
-                Toast.makeText(this, "Remember Me Unchecked", Toast.LENGTH_SHORT).show()
             }
         }
     }

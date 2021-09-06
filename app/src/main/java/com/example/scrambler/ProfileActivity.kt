@@ -110,7 +110,7 @@ class ProfileActivity : AppCompatActivity() {
         val userID = (this.application as Scrambler).getCurrentUser()
         val greetingTextView = findViewById<TextView>(R.id.welcome)
         val emailTextView = findViewById<TextView>(R.id.textEmailAddress)
-        val usernameTextView = findViewById<TextView>(R.id.textUser)
+
         if (userID != null) {
             reference.child(userID).addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -119,9 +119,8 @@ class ProfileActivity : AppCompatActivity() {
                         val username = userProfile.username
                         val email = userProfile.email
                         runOnUiThread {
+                            greetingTextView?.text = getString(R.string.welcome_user, username)
                             emailTextView?.text = email
-                            greetingTextView?.text = "Welcome $username"
-                            usernameTextView?.text = username
                         }
                     }
                 }
@@ -129,7 +128,7 @@ class ProfileActivity : AppCompatActivity() {
                 override fun onCancelled(error: DatabaseError) {
                     Toast.makeText(
                         this@ProfileActivity,
-                        "Something wrong happened!",
+                        getString(R.string.generic_error),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

@@ -86,7 +86,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                                 correct++
                                 runOnUiThread {
                                     enterScramble!!.text.clear()
-                                    correctWords!!.text = correct.toString()
+                                    correctWords!!.text = getString(R.string.score, correct)
                                 }
                                 startGame()
                             }

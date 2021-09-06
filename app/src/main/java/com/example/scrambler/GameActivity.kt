@@ -52,8 +52,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         apiKey = getString(R.string.parse_application_id)
         runOnUiThread {
             timerText!!.visibility = View.INVISIBLE
-            correctWords!!.text = correct.toString()
-            textViewChances!!.text = chances.toString()
+            correctWords!!.text = getString(R.string.score, correct)
+            if (chances != 1) textViewChances!!.text = getString(R.string.attempts_remaining, chances)
+            if (chances == 1) textViewChances!!.text = getString(R.string.attempt_remaining, chances)
         }
         Log.e(TAG, "starting scramble from creation")
         startGame()
@@ -62,7 +63,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             if (chances > 0) {
                 val toast = Toast.makeText(
                     applicationContext,
-                    "Keep trying! You're not done yet",
+                    getString(R.string.restart_keep_trying),
                     Toast.LENGTH_SHORT
                 )
                 toast.show()
@@ -72,8 +73,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 correct = 0
                 seconds = 1
                 runOnUiThread {
-                    correctWords!!.text = correct.toString()
-                    textViewChances!!.text = chances.toString()
+                    correctWords!!.text = getString(R.string.score, correct)
+                    if (chances != 1) textViewChances!!.text = getString(R.string.attempts_remaining, chances)
+                    if (chances == 1) textViewChances!!.text = getString(R.string.attempt_remaining, chances)
                     enterScramble!!.setText("")
                     enterScramble!!.visibility = View.VISIBLE
                     textViewFlash!!.visibility = View.INVISIBLE
@@ -93,12 +95,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             newHighscore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val job1 = launch {
                     runOnUiThread {
-                        textViewHighScore!!.text = "High Score!"
                         textViewHighScore!!.visibility = View.VISIBLE
                     }
                     delay(3000L)
                     runOnUiThread {
-                        textViewHighScore!!.text = ""
                         textViewHighScore!!.visibility = View.INVISIBLE
                     }
                 }
@@ -111,9 +111,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
         runOnUiThread {
             enterScramble!!.text.clear()
-            correctWords!!.text = correct.toString()
+            correctWords!!.text = getString(R.string.score, correct)
+            textViewFlash!!.text = getString(R.string.correct_answer)
             textViewFlash!!.visibility = View.VISIBLE
-            textViewFlash!!.text = "Correct!"
         }
         Log.e(TAG, "starting scramble from getting it right")
         startGame()
@@ -238,30 +238,32 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     guess.cancelAndJoin()
                     correctProcedure()
                 }
-                // If they got it wrong and they have no chances left set up loss stuff and push
-                // too database
+                // If they got it wrong and they have no chances left, set up loss stuff and push
+                // to database
                 !correctBool && chances == 1 -> {
                     chances--
                     runOnUiThread {
-                        textViewFlash!!.text = "You ran out of chances! The word was '$word'."
+                        textViewFlash!!.text = getString(R.string.game_over_text, word)
                         textViewFlash!!.visibility = View.VISIBLE
-                        textViewChances!!.text = chances.toString()
+                        textViewChances!!.text = getString(R.string.attempts_remaining, chances)
                         enterScramble!!.visibility = View.INVISIBLE
                         textViewHighScore!!.visibility = View.INVISIBLE
                     }
                     addToDatabase()
-                    runOnUiThread { textViewChances!!.text = chances.toString() }
                 }
-                // If they got it wrong, subtract chances restart
+                // If they got it wrong, subtract chances and restart
                 !correctBool -> {
                     runOnUiThread {
-                        textViewFlash!!.text = word
+                        textViewFlash!!.text = getString(R.string.incorrect_answer, word)
                         textViewFlash!!.visibility = View.VISIBLE
                     }
                     Log.e(TAG, "Got wrong")
                     guess.cancelAndJoin()
                     chances--
-                    runOnUiThread { textViewChances!!.text = chances.toString() }
+                    runOnUiThread {
+                        if (chances != 1) textViewChances!!.text = getString(R.string.attempts_remaining, chances)
+                        if (chances == 1) textViewChances!!.text = getString(R.string.attempt_remaining, chances)
+                    }
                     delay(1000L)
                     seconds = 1
                     Log.e(TAG, "starting scramble from missing")
@@ -303,8 +305,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
         val db = FirebaseFirestore.getInstance()
         val user = db.collection("Users")
-        var username = ""
-        var newScores = mutableListOf<Int>()
+        var username: String
+        var newScores: MutableList<Int>
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e(TAG, "in user information")
             val job1 = launch {

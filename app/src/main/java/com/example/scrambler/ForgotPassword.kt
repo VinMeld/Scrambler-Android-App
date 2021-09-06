@@ -28,12 +28,12 @@ class ForgotPassword : AppCompatActivity() {
     private fun resetPassword() {
         val email = emailEditText!!.text.toString().trim { it <= ' ' }
         if (email.isEmpty()) {
-            emailEditText!!.error = "Email required!"
+            emailEditText!!.error = getString(R.string.reset_password_empty_email)
             emailEditText!!.requestFocus()
             return
         }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailEditText!!.error = "Please provide a valid email!"
+            emailEditText!!.error = getString(R.string.invalid_email)
             emailEditText!!.requestFocus()
             return
         }
@@ -42,13 +42,13 @@ class ForgotPassword : AppCompatActivity() {
             if (task.isSuccessful) {
                 Toast.makeText(
                     this@ForgotPassword,
-                    "Check your email to reset your password",
+                    getString(R.string.reset_password_check_email),
                     Toast.LENGTH_LONG
                 ).show()
             } else {
                 Toast.makeText(
                     this@ForgotPassword,
-                    "Try again! Something went wrong!",
+                    getString(R.string.generic_error),
                     Toast.LENGTH_LONG
                 ).show()
             }
