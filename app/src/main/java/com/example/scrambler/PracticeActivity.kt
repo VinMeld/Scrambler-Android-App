@@ -27,7 +27,8 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     private var buttonRestart: Button? = null
     private var lastWord = ""
     private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
-    private var apiKey : String? = null
+    private var apiKey: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_practice)
@@ -47,15 +48,15 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
             Log.e(TAG, "skip")
             startGame()
         }
-        enterScramble!!.setOnKeyListener(View.OnKeyListener { _, _, _ ->
+        enterScramble!!.setOnKeyListener { _, _, _ ->
             checkIfCorrect()
             false
-        })
-
+        }
     }
+
     private fun checkIfCorrect() {
         var correctBool = false
-        if(word != "" || lastWord != word) {
+        if (word != "" || lastWord != word) {
             if (enterScramble?.text.toString().trim().length == word.length) {
                 if (sameChars(
                         enterScramble!!.text.toString().trim().lowercase(),
@@ -81,12 +82,12 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                                     correctBool = true
                                 }
                             }
-                            if (correctBool){
+                            if (correctBool) {
                                 // If they got it right then cancel guess and restart
                                 correct++
                                 runOnUiThread {
                                     enterScramble!!.text.clear()
-                                    correctWords!!.text = correct.toString()
+                                    correctWords!!.text = getString(R.string.score, correct)
                                 }
                                 startGame()
                             }
@@ -103,64 +104,69 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         }
 
     }
+
     override fun onClick(v: View) {
         when (v.id) {
             R.id.buttonPracticeMenu -> startActivity(Intent(this, MenuActivity::class.java))
         }
     }
-    protected fun randomNumber(low: Int, high: Int): Int {
+
+    private fun randomNumber(low: Int, high: Int): Int {
         val r = Random()
         return r.nextInt(high - low) + low
     }
+
     @SuppressLint("SetTextI18n")
     protected fun startGame() {
         Log.e(TAG, "StartGame")
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                val wordNumber = randomNumber(1, 1000)
-                // Instantiate the RequestQueue.
-                val queue = Volley.newRequestQueue(this@PracticeActivity)
-                val url = "https://most-common-words.herokuapp.com/api/search?top=" +
-                        wordNumber
-                Log.e(TAG, "in word call")
-                val stringRequest = StringRequest(Request.Method.GET, url,
-                    { stringResponse ->
-                        lastWord = word
-                        val parts = stringResponse.split(":").toTypedArray()[1]
-                        word = parts.split(",").toTypedArray()[0].replace("\"", "")
-                        val random = Random()
-                        Log.e(TAG, "Resetting randomwordscramble")
-                        val a: CharArray = word.toCharArray()
-                        for (i in a.indices) {
-                            val j: Int = random.nextInt(a.size)
-                            // Swap letters
-                            val temp = a[i]
-                            a[i] = a[j]
-                            a[j] = temp
-                        }
-                        randomWordScrambled = String(a)
-                        if (word.length == 1) {
-                            randomWordScrambled = word
-                        }
-                        // Display timer and set random word
-
-                        if(scrambledWord != null){
-                            Log.e(TAG, "Resetting randomwordscramble2")
-                            runOnUiThread {
-                                scrambledWord!!.text = randomWordScrambled
-                            }
-                        }
-                    },
-                    { volleyError ->
-                        // handle error
-                        Log.e(TAG, "Error in getting word $volleyError")
+            val wordNumber = randomNumber(1, 1000)
+            // Instantiate the RequestQueue.
+            val queue = Volley.newRequestQueue(this@PracticeActivity)
+            val url = "https://most-common-words.herokuapp.com/api/search?top=" +
+                    wordNumber
+            Log.e(TAG, "in word call")
+            val stringRequest = StringRequest(Request.Method.GET, url,
+                { stringResponse ->
+                    lastWord = word
+                    val parts = stringResponse.split(":").toTypedArray()[1]
+                    word = parts.split(",").toTypedArray()[0].replace("\"", "")
+                    val random = Random()
+                    Log.e(TAG, "Resetting randomwordscramble")
+                    val a: CharArray = word.toCharArray()
+                    for (i in a.indices) {
+                        val j: Int = random.nextInt(a.size)
+                        // Swap letters
+                        val temp = a[i]
+                        a[i] = a[j]
+                        a[j] = temp
                     }
-                )
-                queue.add(stringRequest)
+                    randomWordScrambled = String(a)
+                    if (word.length == 1) {
+                        randomWordScrambled = word
+                    }
+                    // Display timer and set random word
+
+                    if (scrambledWord != null) {
+                        Log.e(TAG, "Resetting randomwordscramble2")
+                        runOnUiThread {
+                            scrambledWord!!.text = randomWordScrambled
+                        }
+                    }
+                },
+                { volleyError ->
+                    // handle error
+                    Log.e(TAG, "Error in getting word $volleyError")
+                }
+            )
+            queue.add(stringRequest)
         }
     }
+
     companion object {
         private const val TAG = "PracticeActivity"
     }
+
     override fun onPause() {
         Log.e(TAG, "in pause()")
         runBlocking {
@@ -168,6 +174,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         }
         super.onPause()
     }
+
     private fun sameChars(firstStr: String, secondStr: String): Boolean {
         val first = firstStr.toCharArray()
         val second = secondStr.toCharArray()

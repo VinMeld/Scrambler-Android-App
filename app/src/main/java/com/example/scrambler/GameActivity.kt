@@ -1,6 +1,5 @@
 package com.example.scrambler
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -10,12 +9,15 @@ import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.example.scrambler.Utils.Scrambler
+import com.example.scrambler.utils.Scrambler
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
+import java.util.Collections.max
 import java.util.concurrent.Executors
-class GameActivity : AppCompatActivity(), View.OnClickListener {
+
+open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
     private var randomWordScrambled = ""
     private var correct = 0
@@ -35,7 +37,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var lastWord = ""
     private var highscore = 0
     private val user1: MutableMap<String, Any?> = HashMap()
-    private var apiKey : String? = null
+    private var apiKey: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -52,31 +55,37 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         apiKey = getString(R.string.parse_application_id)
         runOnUiThread {
             timerText!!.visibility = View.INVISIBLE
-            correctWords!!.text = correct.toString()
-            textViewChances!!.text = chances.toString()
+            correctWords!!.text = getString(R.string.score, correct)
+            if (chances != 1) textViewChances!!.text =
+                getString(R.string.attempts_remaining, chances)
+            if (chances == 1) textViewChances!!.text =
+                getString(R.string.attempt_remaining, chances)
         }
         Log.e(TAG, "starting scramble from creation")
         startGame()
         // RESTART BUTTON
         buttonRestart?.setOnClickListener {
             if (chances > 0) {
-                val toast = Toast.makeText(
-                    applicationContext,
-                    "Keep trying! You're not done yet",
-                    Toast.LENGTH_SHORT
-                )
-                toast.show()
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    getString(R.string.restart_keep_trying),
+                    Snackbar.LENGTH_SHORT
+                ).show()
             } else {
                 getUserHighScore()
                 chances = 3
                 correct = 0
                 seconds = 1
                 runOnUiThread {
-                    correctWords!!.text = correct.toString()
-                    textViewChances!!.text = chances.toString()
+                    correctWords!!.text = getString(R.string.score, correct)
+                    if (chances != 1) textViewChances!!.text =
+                        getString(R.string.attempts_remaining, chances)
+                    if (chances == 1) textViewChances!!.text =
+                        getString(R.string.attempt_remaining, chances)
                     enterScramble!!.setText("")
                     enterScramble!!.visibility = View.VISIBLE
                     textViewFlash!!.visibility = View.INVISIBLE
+                    textViewHighScore!!.visibility = View.INVISIBLE
                 }
                 Log.e(TAG, "starting scramble from RESTART")
                 startGame()
@@ -93,27 +102,17 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             newHighscore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val job1 = launch {
                     runOnUiThread {
-                        textViewHighScore!!.text = "High Score!"
                         textViewHighScore!!.visibility = View.VISIBLE
-                    }
-                    delay(3000L)
-                    runOnUiThread {
-                        textViewHighScore!!.text = ""
-                        textViewHighScore!!.visibility = View.INVISIBLE
                     }
                 }
                 job1.join()
             }
-        } else {
-            runOnUiThread {
-                textViewHighScore!!.visibility != View.INVISIBLE
-            }
         }
         runOnUiThread {
             enterScramble!!.text.clear()
-            correctWords!!.text = correct.toString()
+            correctWords!!.text = getString(R.string.score, correct)
+            textViewFlash!!.text = getString(R.string.correct_answer)
             textViewFlash!!.visibility = View.VISIBLE
-            textViewFlash!!.text = "Correct!"
         }
         Log.e(TAG, "starting scramble from getting it right")
         startGame()
@@ -125,13 +124,12 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    protected fun randomNumber(low: Int, high: Int): Int {
+    private fun randomNumber(low: Int, high: Int): Int {
         val r = Random()
         return r.nextInt(high - low) + low
     }
 
-    @SuppressLint("SetTextI18n")
-    protected fun startGame() {
+    private fun startGame() {
         Log.e(TAG, "StartGame")
         runOnUiThread {
             timerText!!.visibility = View.VISIBLE
@@ -192,7 +190,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             var correctBool = false
 
             while (!guess.isCompleted) {
-                if(enterScramble!!.text.toString().trim().length == word.length ) {
+                if (enterScramble!!.text.toString().trim().length == word.length) {
                     if (sameChars(
                             enterScramble!!.text.toString().trim().lowercase(),
                             word.lowercase()
@@ -226,7 +224,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                     }
                 }
-                if(correctBool){
+                if (correctBool) {
                     break
                 }
                 delay(500L)
@@ -238,30 +236,33 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     guess.cancelAndJoin()
                     correctProcedure()
                 }
-                // If they got it wrong and they have no chances left set up loss stuff and push
-                // too database
+                // If they got it wrong and they have no chances left, set up loss stuff and push
+                // to database
                 !correctBool && chances == 1 -> {
                     chances--
                     runOnUiThread {
-                        textViewFlash!!.text = "You ran out of chances! The word was '$word'."
+                        textViewFlash!!.text = getString(R.string.game_over_text, word)
                         textViewFlash!!.visibility = View.VISIBLE
-                        textViewChances!!.text = chances.toString()
+                        textViewChances!!.text = getString(R.string.attempts_remaining, chances)
                         enterScramble!!.visibility = View.INVISIBLE
-                        textViewHighScore!!.visibility = View.INVISIBLE
                     }
                     addToDatabase()
-                    runOnUiThread { textViewChances!!.text = chances.toString() }
                 }
-                // If they got it wrong, subtract chances restart
+                // If they got it wrong, subtract chances and restart
                 !correctBool -> {
                     runOnUiThread {
-                        textViewFlash!!.text = word
+                        textViewFlash!!.text = getString(R.string.incorrect_answer, word)
                         textViewFlash!!.visibility = View.VISIBLE
                     }
                     Log.e(TAG, "Got wrong")
                     guess.cancelAndJoin()
                     chances--
-                    runOnUiThread { textViewChances!!.text = chances.toString() }
+                    runOnUiThread {
+                        if (chances != 1) textViewChances!!.text =
+                            getString(R.string.attempts_remaining, chances)
+                        if (chances == 1) textViewChances!!.text =
+                            getString(R.string.attempt_remaining, chances)
+                    }
                     delay(1000L)
                     seconds = 1
                     Log.e(TAG, "starting scramble from missing")
@@ -270,6 +271,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+
     private fun sameChars(firstStr: String, secondStr: String): Boolean {
         val first = firstStr.toCharArray()
         val second = secondStr.toCharArray()
@@ -277,6 +279,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         Arrays.sort(second)
         return first.contentEquals(second)
     }
+
     override fun onPause() {
         Log.e(TAG, "in pause()")
         if (chances != 0) {
@@ -303,8 +306,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
         val db = FirebaseFirestore.getInstance()
         val user = db.collection("Users")
-        var username = ""
-        var newScores = mutableListOf<Int>()
+        var username: String
+        var newScores: MutableList<Int>
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e(TAG, "in user information")
             val job1 = launch {
@@ -353,18 +356,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             } else if (scores is List<*>) {
                 try {
                     val listScores: MutableList<Int> = scores as MutableList<Int>
-                    val comparator: Comparator<Int> = Collections.reverseOrder()
-                    Collections.sort(listScores, comparator)
-                    // Log.e(TAG, "List scores $listScores first one " + listScores[0])
-                    highscore = listScores[0].toInt()
-                    Log.e(TAG, "Highest score $highscore")
-                } catch(e: ClassCastException){
-                    Log.e(TAG, "Class exception Long $e")
+                    highscore = max(listScores)
+                } catch (e: ClassCastException) {
                     val listScores: MutableList<Long> = scores as MutableList<Long>
-                    listScores.reverse();
-                    // Log.e(TAG, "List scores $listScores first one " + listScores[0])
-                    highscore = listScores[0].toInt()
-                    Log.e(TAG, "Highest score $highscore")
+                    // Using max() produces a fatal casting error
+                    var highestScore = 0
+                    for (score in listScores) if (score > highestScore) highestScore = score.toInt()
+                    highscore = highestScore
                 }
             }
         }
@@ -376,14 +374,14 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val db = FirebaseFirestore.getInstance()
 
         scopeFirebaseAdd.launch(Dispatchers.Default) {
-            var job1 = launch {
+            val job1 = launch {
                 getUserInformation()
             }
             while (!job1.isCompleted) {
                 delay(1000L)
             }
             if (user1["username"] != null && userID != null && correct != 0) {
-                var scores = user1["scores"] as MutableList<Int>
+                val scores = user1["scores"] as MutableList<Int>
                 scores.add(correct)
                 user1["scores"] = scores
                 Log.e(TAG, user1.toString())

@@ -1,3 +1,79 @@
 <resources>
     <string name="app_name">Scrambler</string>
+    <string name="cancel">Cancel</string>
+    <string name="loading">Loading…</string>
+    <string name="generic_error">An error has occurred. Please try again.</string>
+
+    <!-- Login -->
+    <string name="email_address">Email address</string>
+    <string name="password">Password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="log_in_button">Sign In</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="create_account">Create an account</string>
+    <string name="incorrect_login_snackbar">Failed to log in. Please check your credentials and try again.</string>
+
+    <!-- Account Creation -->
+    <string name="username">Username</string>
+    <string name="create_account_header">Create Account</string>
+    <string name="create_account_button">Create Account</string>
+
+    <string name="empty_email">Please enter an email address.</string>
+    <string name="invalid_email">Please provide a valid email address.</string>
+    <string name="empty_username">Please enter a username.</string>
+    <string name="empty_password">Please enter a password.</string>
+    <string name="invalid_password">Please enter a password that contains at least 6 alphanumeric characters.</string>
+
+    <string name="verify_email_snackbar">Welcome to Scrambler! Open the link sent to your email to verify your account.</string>
+    <string name="email_taken">This email address is already in use. Please log in with your existing account, or create a new account with a different email address.</string>
+    <string name="username_taken">This username is already taken. Please choose a different one.</string>
+    <string name="new_account_success">An account has been successfully created. Open the link sent to your email to verify your account.</string>
+    <string name="new_account_fail">Failed to create an account. Please try again.</string>
+
+    <!-- Menu -->
+    <string name="start_game">Start Game</string>
+    <string name="practice_game">Practice Game</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="account_settings_button">Account Settings</string>
+
+    <!-- Game -->
+    <string name="enter_word">Enter unscrambled word</string>
+    <string name="correct_answer">Correct!</string>
+    <string name="incorrect_answer">The word was "%1$s."</string>
+    <string name="game_over_text">You ran out of chances! The word was "%1$s."</string>
+
+    <string name="score_placeholder">Score: 0</string>
+    <string name="score">Score: %1$d</string>
+    <string name="high_score">High score!</string>
+
+    <string name="attempts_placeholder">3 attempts remaining</string>
+    <string name="attempts_remaining">%1$d attempts remaining</string>
+    <string name="attempt_remaining">%1$d attempt remaining</string>
+
+    <string name="skip_word">Skip Word</string>
+    <string name="restart_keep_trying">Keep trying! You\'re not done yet.</string>
+    <string name="restart_game">Restart Game</string>
+    <string name="end_game">End Game</string>
+
+    <!-- Leaderboard -->
+    <string name="personal_leaderboard">Personal</string>
+    <string name="global_leaderboard">Global</string>
+    <string name="leaderboard_empty">Start playing to record your scores!</string>
+    
+    <!-- Account Settings -->
+    <string name="account_settings">Account Settings</string>
+    <string name="welcome_placeholder">Welcome.</string>
+    <string name="welcome_user">Welcome, %1$s.</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_account_warning">Are you sure you want to delete your account? All leaderboard scores will be permanently lost.</string>
+    <string name="return_to_menu">Return to Menu</string>
+
+    <!-- Reset Password -->
+    <string name="reset_password">Reset Password</string>
+    <string name="reset_password_button">Send link</string>
+    <string name="reset_password_desc">A link will be sent to your email address, allowing you to reset your account password. If you do not see the email, please check your junk or spam folders.</string>
+    <string name="reset_password_empty_email">Please enter your email address to reset your password.</string>
+    <string name="reset_password_check_email">Open the link sent to your email to reset your password.</string>
+    <string name="reset_password_error">No accounts with this email address currently exist. Please check your input and try again.</string>
 </resources>

@@ -40,8 +40,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/textViewHighScore"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp"
-        android:text="@string/loading"
         android:textSize="34sp" />
 
     <EditText
@@ -53,6 +51,7 @@
         android:layout_marginTop="20dp"
         android:ems="10"
         android:hint="@string/enter_word"
+        android:imeOptions="flagNoExtractUi"
         android:importantForAutofill="no"
         android:inputType="text" />
 
@@ -64,6 +63,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="20dp"
+        android:text="@string/loading"
         android:textAlignment="center"
         android:textSize="20sp" />
 

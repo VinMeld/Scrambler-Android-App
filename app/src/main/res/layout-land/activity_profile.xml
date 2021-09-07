@@ -3,12 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     tools:context=".ProfileActivity">
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center">
+        android:id="@+id/appBrandingLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="50dp">
 
         <ImageView
             android:id="@+id/userIcon"
@@ -27,13 +30,28 @@
             android:text="@string/account_settings"
             android:textSize="30sp" />
 
-        <TextView
-            android:id="@+id/welcome"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/buttonMenuMain"
+            android:layout_width="170dp"
             android:layout_height="wrap_content"
             android:layout_below="@id/accountSettingsHeader"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="40dp"
+            android:text="@string/return_to_menu"
+            android:textAllCaps="false" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/appBrandingLayout">
+
+        <TextView
+            android:id="@+id/welcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
             android:text="@string/welcome_placeholder"
             android:textSize="20sp" />
 
@@ -43,37 +61,26 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/welcome"
             android:layout_centerHorizontal="true"
-            android:text=""
             android:textSize="16sp" />
-
-        <Button
-            android:id="@+id/buttonMenuMain"
-            android:layout_width="170dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textEmailAddress"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"
-            android:text="@string/return_to_menu"
-            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/signOut"
             android:layout_width="170dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/buttonMenuMain"
+            android:layout_below="@id/textEmailAddress"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="20dp"
             android:text="@string/sign_out"
             android:textAllCaps="false" />
-    </RelativeLayout>
 
-    <Button
-        android:id="@+id/buttonDeleteAccount"
-        android:layout_width="170dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"
-        android:backgroundTint="@color/red"
-        android:text="@string/delete_account" />
+        <Button
+            android:id="@+id/buttonDeleteAccount"
+            android:layout_width="170dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/signOut"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="40dp"
+            android:backgroundTint="@color/red"
+            android:text="@string/delete_account" />
+    </RelativeLayout>
 </RelativeLayout>
