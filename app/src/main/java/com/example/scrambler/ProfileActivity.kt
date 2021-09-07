@@ -112,6 +112,7 @@ class ProfileActivity : AppCompatActivity() {
             val alert = dialogBuilder.create()
             alert.show()
         }
+
         logout?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
@@ -129,10 +130,12 @@ class ProfileActivity : AppCompatActivity() {
             finish()
             startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
         }
+
         menu.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             startActivity(Intent(this@ProfileActivity, MenuActivity::class.java))
         }
+
         val reference = FirebaseDatabase.getInstance().getReference("Users")
         val userID = (this.application as Scrambler).getCurrentUser()
         val greetingTextView = findViewById<TextView>(R.id.welcome)
@@ -143,11 +146,9 @@ class ProfileActivity : AppCompatActivity() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val userProfile = snapshot.getValue(User::class.java)
                     if (userProfile != null) {
-                        val username = userProfile.username
-                        val email = userProfile.email
                         runOnUiThread {
-                            greetingTextView?.text = getString(R.string.welcome_user, username)
-                            emailTextView?.text = email
+                            greetingTextView?.text = getString(R.string.welcome_user, userProfile.username)
+                            emailTextView?.text = userProfile.email
                         }
                     }
                 }

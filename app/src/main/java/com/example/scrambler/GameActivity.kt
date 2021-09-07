@@ -14,6 +14,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
+import java.util.Collections.max
 import java.util.concurrent.Executors
 
 open class GameActivity : AppCompatActivity(), View.OnClickListener {
@@ -84,6 +85,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     enterScramble!!.setText("")
                     enterScramble!!.visibility = View.VISIBLE
                     textViewFlash!!.visibility = View.INVISIBLE
+                    textViewHighScore!!.visibility = View.INVISIBLE
                 }
                 Log.e(TAG, "starting scramble from RESTART")
                 startGame()
@@ -102,16 +104,8 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     runOnUiThread {
                         textViewHighScore!!.visibility = View.VISIBLE
                     }
-                    delay(3000L)
-                    runOnUiThread {
-                        textViewHighScore!!.visibility = View.INVISIBLE
-                    }
                 }
                 job1.join()
-            }
-        } else {
-            runOnUiThread {
-                textViewHighScore!!.visibility != View.INVISIBLE
             }
         }
         runOnUiThread {
@@ -251,7 +245,6 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                         textViewFlash!!.visibility = View.VISIBLE
                         textViewChances!!.text = getString(R.string.attempts_remaining, chances)
                         enterScramble!!.visibility = View.INVISIBLE
-                        textViewHighScore!!.visibility = View.INVISIBLE
                     }
                     addToDatabase()
                 }
@@ -363,18 +356,13 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             } else if (scores is List<*>) {
                 try {
                     val listScores: MutableList<Int> = scores as MutableList<Int>
-                    val comparator: Comparator<Int> = Collections.reverseOrder()
-                    Collections.sort(listScores, comparator)
-                    // Log.e(TAG, "List scores $listScores first one " + listScores[0])
-                    highscore = listScores[0]
-                    Log.e(TAG, "Highest score $highscore")
+                    highscore = max(listScores)
                 } catch (e: ClassCastException) {
-                    Log.e(TAG, "Class exception Long $e")
                     val listScores: MutableList<Long> = scores as MutableList<Long>
-                    listScores.reverse()
-                    // Log.e(TAG, "List scores $listScores first one " + listScores[0])
-                    highscore = listScores[0].toInt()
-                    Log.e(TAG, "Highest score $highscore")
+                    // Using max() produces a fatal casting error
+                    var highestScore = 0
+                    for (score in listScores) if (score > highestScore) highestScore = score.toInt()
+                    highscore = highestScore
                 }
             }
         }

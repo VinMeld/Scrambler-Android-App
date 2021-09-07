@@ -43,6 +43,7 @@
         android:layout_below="@id/editTextWord"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
+        android:focusable="false"
         android:soundEffectsEnabled="false"
         android:text="@string/skip_word"
         android:textAllCaps="false" />
@@ -54,6 +55,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
+        android:focusable="false"
         android:soundEffectsEnabled="false"
         android:text="@string/end_game"
         android:textAllCaps="false" />

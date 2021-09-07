@@ -58,7 +58,6 @@
     <!-- Leaderboard -->
     <string name="personal_leaderboard">Personal</string>
     <string name="global_leaderboard">Global</string>
-    <string name="leaderboard_item_ranking">%1$d. </string>
     <string name="leaderboard_empty">Start playing to record your scores!</string>
     
     <!-- Account Settings -->

@@ -30,7 +30,7 @@
         android:layout_below="@id/textViewCorrect"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="20dp"
-        android:text="@string/loading"
+        android:text="@string/high_score"
         android:textSize="20sp"
         android:visibility="invisible" />
 
@@ -90,6 +90,7 @@
             android:layout_width="155dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="30dp"
+            android:focusable="false"
             android:soundEffectsEnabled="false"
             android:text="@string/restart_game"
             android:textAllCaps="false" />
@@ -99,6 +100,7 @@
             android:layout_width="155dp"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/buttonRestart"
+            android:focusable="false"
             android:soundEffectsEnabled="false"
             android:text="@string/end_game"
             android:textAllCaps="false" />
