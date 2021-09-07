@@ -1,4 +1,4 @@
-package com.example.scrambler.Utils
+package com.example.scrambler.utils
 
 import androidx.recyclerview.widget.RecyclerView
 import android.view.ViewGroup

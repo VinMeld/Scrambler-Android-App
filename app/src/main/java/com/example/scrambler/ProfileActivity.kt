@@ -1,13 +1,14 @@
 package com.example.scrambler
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.scrambler.Utils.Scrambler
+import com.example.scrambler.utils.Scrambler
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -30,60 +31,86 @@ class ProfileActivity : AppCompatActivity() {
         val deleteAccount = findViewById<Button>(R.id.buttonDeleteAccount)
         val coroutineDeleteStuff = CoroutineScope(CoroutineName("Delete everything"))
         deleteAccount.setOnClickListener {
-            coroutineDeleteStuff.launch(Default){
-                val userID = (this@ProfileActivity.application as Scrambler).getCurrentUser()
-                val reference = FirebaseDatabase.getInstance().getReference("Users")
-                // Realtime
-                launch{
-                    if (userID != null) {
-                        reference.child(userID).removeValue()
-                    }
+            val dialogBuilder = AlertDialog.Builder(this@ProfileActivity)
+            dialogBuilder.setMessage(getString(R.string.delete_account_warning))
+                .setTitle(R.string.delete_account)
+                .setIcon(R.drawable.ic_baseline_warning_24)
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.cancel)) { dialog, _ ->
+                    dialog.dismiss()
                 }
-                // Auth
-                launch {
-                    val user = FirebaseAuth.getInstance().currentUser
-                    // Get auth credentials from the user for re-authentication. The example below shows
-                    // email and password credentials but there are multiple possible providers,
-                    // such as GoogleAuthProvider or FacebookAuthProvider.
-                    val credential = EmailAuthProvider
-                        .getCredential("user@example.com", "password1234")
-
-                    // Prompt the user to re-provide their sign-in credentials
-                    user?.reauthenticate(credential)?.addOnCompleteListener { Log.d(TAG, "User re-authenticated.") }
-                    user?.delete()?.addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.d(TAG, "User account deleted.")
-                        } else{
-                            Log.d(TAG, "Failed to delete user")
+                .setNegativeButton(getString(R.string.delete_account)) { dialog, _ ->
+                    coroutineDeleteStuff.launch(Default) {
+                        val userID =
+                            (this@ProfileActivity.application as Scrambler).getCurrentUser()
+                        val reference = FirebaseDatabase.getInstance().getReference("Users")
+                        // Realtime
+                        launch {
+                            if (userID != null) {
+                                reference.child(userID).removeValue()
+                            }
                         }
+                        // Auth
+                        launch {
+                            val user = FirebaseAuth.getInstance().currentUser
+                            // Get auth credentials from the user for re-authentication. The example below shows
+                            // email and password credentials but there are multiple possible providers,
+                            // such as GoogleAuthProvider or FacebookAuthProvider.
+                            val credential = EmailAuthProvider
+                                .getCredential("user@example.com", "password1234")
+
+                            // Prompt the user to re-provide their sign-in credentials
+                            user?.reauthenticate(credential)
+                                ?.addOnCompleteListener { Log.d(TAG, "User re-authenticated.") }
+                            user?.delete()?.addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Log.d(TAG, "User account deleted.")
+                                } else {
+                                    Log.d(TAG, "Failed to delete user")
+                                }
+                            }
+                        }
+                        // Firestore
+                        launch {
+                            val db = FirebaseFirestore.getInstance()
+                            userID?.let { it1 ->
+                                db.collection("Users").document(it1)
+                                    .delete()
+                                    .addOnSuccessListener {
+                                        Log.d(
+                                            TAG,
+                                            "DocumentSnapshot successfully deleted!"
+                                        )
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.w(
+                                            TAG,
+                                            "Error deleting document",
+                                            e
+                                        )
+                                    }
+                            }
+                        }
+                        val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
+                        val editor = preferences.edit()
+                        editor.putString("remember", "false")
+                        editor.apply()
+                        val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
+                        val editorEmail = preferencesEmail.edit()
+                        editorEmail.putString("email", null)
+                        editorEmail.apply()
+                        val preferencesPassword = getSharedPreferences("email", MODE_PRIVATE)
+                        val editorPassword = preferencesPassword.edit()
+                        editorPassword.putString("password", null)
+                        editorPassword.apply()
+                        FirebaseAuth.getInstance().signOut()
+                        dialog.dismiss()
+                        finish()
+                        startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
                     }
                 }
-                // Firestore
-                launch {
-                    val db = FirebaseFirestore.getInstance()
-                    userID?.let { it1 ->
-                        db.collection("Users").document(it1)
-                            .delete()
-                            .addOnSuccessListener { Log.d(TAG, "DocumentSnapshot successfully deleted!") }
-                            .addOnFailureListener { e -> Log.w(TAG, "Error deleting document", e) }
-                    }
-                }
-                val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
-                val editor = preferences.edit()
-                editor.putString("remember", "false")
-                editor.apply()
-                val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
-                val editorEmail = preferencesEmail.edit()
-                editorEmail.putString("email", null)
-                editorEmail.apply()
-                val preferencesPassword = getSharedPreferences("email", MODE_PRIVATE)
-                val editorPassword = preferencesPassword.edit()
-                editorPassword.putString("password", null)
-                editorPassword.apply()
-                FirebaseAuth.getInstance().signOut()
-                finish()
-                startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
-            }
+            val alert = dialogBuilder.create()
+            alert.show()
         }
         logout?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
@@ -126,10 +153,10 @@ class ProfileActivity : AppCompatActivity() {
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Toast.makeText(
-                        this@ProfileActivity,
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
                         getString(R.string.generic_error),
-                        Toast.LENGTH_SHORT
+                        Snackbar.LENGTH_LONG
                     ).show()
                 }
             })

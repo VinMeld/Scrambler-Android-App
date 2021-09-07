@@ -4,16 +4,7 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
 
-class User {
-    var username: String? = null
-    var email: String? = null
-
-    constructor()
-    constructor(username: String?, email: String?) {
-        this.username = username
-        this.email = email
-    }
-
+class User(var username: String? = "", var email: String? = "") {
     fun addUuid(UUID: String?) {
         val user: MutableMap<String, Any?> = HashMap()
         user["username"] = username

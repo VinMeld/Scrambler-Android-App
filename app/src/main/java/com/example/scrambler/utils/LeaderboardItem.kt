@@ -1,3 +1,3 @@
-package com.example.scrambler.Utils
+package com.example.scrambler.utils
 
 class LeaderboardItem(val ranking: Int, val username: String)

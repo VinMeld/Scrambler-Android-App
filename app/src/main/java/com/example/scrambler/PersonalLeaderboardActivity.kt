@@ -10,9 +10,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scrambler.Utils.LeaderboardAdapter
-import com.example.scrambler.Utils.LeaderboardItem
-import com.example.scrambler.Utils.Scrambler
+import com.example.scrambler.utils.LeaderboardAdapter
+import com.example.scrambler.utils.LeaderboardItem
+import com.example.scrambler.utils.Scrambler
 import com.google.android.material.tabs.TabLayout
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
@@ -62,7 +62,9 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                     Log.e(TAG, "Personal Leaderboard $scores")
                                     val personalRankings = ArrayList<LeaderboardItem>()
                                     for (i in scores!!.indices) {
-                                        if (i < 10 && scores!![i] != 0) personalRankings.add(LeaderboardItem(i + 1, scores!![i].toString()))
+                                        if (i < 10 && scores!![i] != 0) personalRankings.add(
+                                            LeaderboardItem(i + 1, scores!![i].toString())
+                                        )
                                     }
 
                                     runOnUiThread {
@@ -70,7 +72,8 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                             val adapter = LeaderboardAdapter()
                                             adapter.setRankings(personalRankings)
                                             leaderboardRecycler?.adapter = adapter
-                                            leaderboardRecycler?.layoutManager = LinearLayoutManager(parent)
+                                            leaderboardRecycler?.layoutManager =
+                                                LinearLayoutManager(parent)
                                         } else {
                                             leaderboardIsEmpty = true
                                             emptyLeaderboardText?.visibility = View.VISIBLE
@@ -122,14 +125,20 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             Log.e(TAG, scores.toString())
                             val globalRankings = ArrayList<LeaderboardItem>()
                             (scores.forEachIndexed { index, scoreObj ->
-                                if (index < 10) globalRankings.add(LeaderboardItem(index + 1, scoreObj.toString()))
+                                if (index < 10) globalRankings.add(
+                                    LeaderboardItem(
+                                        index + 1,
+                                        scoreObj.toString()
+                                    )
+                                )
                             })
 
                             runOnUiThread {
                                 val adapter = LeaderboardAdapter()
                                 adapter.setRankings(globalRankings)
                                 globalLeaderboardRecycler?.adapter = adapter
-                                globalLeaderboardRecycler?.layoutManager = LinearLayoutManager(parent)
+                                globalLeaderboardRecycler?.layoutManager =
+                                    LinearLayoutManager(parent)
                             }
                         } else {
                             Log.d(TAG, "No such document")
@@ -146,7 +155,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
             runOnUiThread {
                 progressbar!!.visibility = View.INVISIBLE
                 leaderboardRecycler!!.visibility = View.VISIBLE
-                leaderboardTab!!.addOnTabSelectedListener(object: TabLayout.OnTabSelectedListener {
+                leaderboardTab!!.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                     override fun onTabSelected(tab: TabLayout.Tab?) {
                         if (tab?.position == 0) {
                             leaderboardRecycler!!.visibility = View.VISIBLE
@@ -158,6 +167,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             globalLeaderboardRecycler!!.visibility = View.VISIBLE
                         }
                     }
+
                     override fun onTabUnselected(tab: TabLayout.Tab?) {}
                     override fun onTabReselected(tab: TabLayout.Tab?) {}
                 })

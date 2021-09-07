@@ -1,10 +1,10 @@
-package com.example.scrambler.Utils
+package com.example.scrambler.utils
 
 import android.app.Application
 
-
 class Scrambler : Application() {
-    var currentUuid: String? = null
+    private var currentUuid: String? = null
+
     fun getCurrentUser(): String? {
         return currentUuid
     }

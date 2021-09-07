@@ -1,15 +1,20 @@
 package com.example.scrambler
 
 import android.content.Intent
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.scrambler.Utils.Scrambler
+import com.example.scrambler.utils.Scrambler
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
+    private var dimBackground: LinearLayout? = null
     private var forgotPassword: TextView? = null
     private var editTextEmail: EditText? = null
     private var editTextPassword: EditText? = null
@@ -18,6 +23,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var progressBar: ProgressBar? = null
     private var remember: CheckBox? = null
     private var register: TextView? = null
+
     override fun onClick(v: View) {
         when (v.id) {
             R.id.textRegister -> startActivity(Intent(this, RegisterUser::class.java))
@@ -30,26 +36,35 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val email = editTextEmail!!.text.toString().trim { it <= ' ' }
         val password = editTextPassword!!.text.toString().trim { it <= ' ' }
         if (email.isEmpty()) {
-            editTextEmail!!.error = "Email required!"
+            editTextEmail!!.error = getString(R.string.empty_email)
             editTextEmail!!.requestFocus()
             return
         }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            editTextEmail!!.error = "Please provide a valid email!"
+            editTextEmail!!.error = getString(R.string.invalid_email)
             editTextEmail!!.requestFocus()
             return
         }
         if (password.isEmpty()) {
-            editTextPassword!!.error = "Password required!"
+            editTextPassword!!.error = getString(R.string.empty_password)
             editTextPassword!!.requestFocus()
             return
         }
-        if (password.length < 6) {
-            editTextPassword!!.error = "Min password is 6 characters!"
-            editTextPassword!!.requestFocus()
-            return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            findViewById<View>(R.id.loginActivity).setRenderEffect(
+                RenderEffect.createBlurEffect(
+                    16F,
+                    16F,
+                    Shader.TileMode.MIRROR
+                )
+            )
+        } else {
+            dimBackground = findViewById(R.id.dimBackground)
+            dimBackground!!.visibility = View.VISIBLE
         }
         progressBar!!.visibility = View.VISIBLE
+
         mAuth!!.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val user = FirebaseAuth.getInstance().currentUser
@@ -68,21 +83,25 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                 } else {
                     user.sendEmailVerification()
-                    Toast.makeText(
-                        this@MainActivity,
-                        getString(R.string.verify_email_toast),
-                        Toast.LENGTH_LONG
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        getString(R.string.verify_email_snackbar),
+                        Snackbar.LENGTH_LONG
                     ).show()
-                    progressBar!!.visibility = View.GONE
                 }
             } else {
-                Toast.makeText(
-                    this@MainActivity,
-                    getString(R.string.incorrect_login_toast),
-                    Toast.LENGTH_SHORT
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    getString(R.string.incorrect_login_snackbar),
+                    Snackbar.LENGTH_LONG
                 ).show()
-                progressBar!!.visibility = View.GONE
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                findViewById<View>(R.id.loginActivity).setRenderEffect(null)
+            } else {
+                dimBackground!!.visibility = View.GONE
+            }
+            progressBar!!.visibility = View.GONE
         }
     }
 
