@@ -11,6 +11,10 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.scrambler.utils.Scrambler
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
@@ -38,6 +42,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var highscore = 0
     private val user1: MutableMap<String, Any?> = HashMap()
     private var apiKey: String? = null
+    private var wordsArray = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +66,20 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             if (chances == 1) textViewChances!!.text =
                 getString(R.string.attempt_remaining, chances)
         }
+        val wordsRef = FirebaseDatabase.getInstance().getReference("WordList").child("listOfWords")
+        wordsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    for (ds in dataSnapshot.children) {
+                        wordsArray.add(ds.value as String)
+                        Log.d("TAG", ds.value as String)
+                    }
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG, error.toString())
+            }
+        })
         Log.e(TAG, "starting scramble from creation")
         startGame()
         // RESTART BUTTON
@@ -147,45 +166,34 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                val wordNumber = randomNumber(1, 1000)
-                // Instantiate the RequestQueue.
-                val queue = Volley.newRequestQueue(this@GameActivity)
-                val url = "https://most-common-words.herokuapp.com/api/search?top=" +
-                        wordNumber
-                Log.e(TAG, "in word call")
-                val stringRequest = StringRequest(Request.Method.GET, url,
-                    { stringResponse ->
-                        lastWord = word
-                        val parts = stringResponse.split(":").toTypedArray()[1]
-                        word = parts.split(",").toTypedArray()[0].replace("\"", "")
-                        val random = Random()
-                        Log.e(TAG, "Resetting randomwordscramble")
-                        val a: CharArray = word.toCharArray()
-                        for (i in a.indices) {
-                            val j: Int = random.nextInt(a.size)
-                            // Swap letters
-                            val temp = a[i]
-                            a[i] = a[j]
-                            a[j] = temp
-                        }
-                        randomWordScrambled = String(a)
-                        if (word.length == 1) {
-                            randomWordScrambled = word
-                        }
-                        seconds = 1
-                        // Display timer and set random word
-                        runOnUiThread {
-                            scrambledWord!!.text = randomWordScrambled
-                            textViewFlash!!.visibility = View.INVISIBLE
-                            timerText!!.visibility = View.VISIBLE
-                        }
-                    },
-                    { volleyError ->
-                        // handle error
-                        Log.e(TAG, "Error in getting word $volleyError")
-                    }
-                )
-                queue.add(stringRequest)
+                while(wordsArray.size < 1){
+                    delay(100L)
+                }
+                val wordNumber = randomNumber(1, wordsArray.size)
+
+                lastWord = word
+                word = wordsArray[wordNumber]
+                val random = Random()
+                Log.e(TAG, "Resetting randomwordscramble")
+                val a: CharArray = word.toCharArray()
+                for (i in a.indices) {
+                    val j: Int = random.nextInt(a.size)
+                    // Swap letters
+                    val temp = a[i]
+                    a[i] = a[j]
+                    a[j] = temp
+                }
+                randomWordScrambled = String(a)
+                if (word.length == 1) {
+                    randomWordScrambled = word
+                }
+                seconds = 1
+                // Display timer and set random word
+                runOnUiThread {
+                    scrambledWord!!.text = randomWordScrambled
+                    textViewFlash!!.visibility = View.INVISIBLE
+                    timerText!!.visibility = View.VISIBLE
+                }
             }
             var correctBool = false
 
@@ -196,32 +204,34 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                             word.lowercase()
                         )
                     ) {
-                        val queue = Volley.newRequestQueue(this@GameActivity)
-                        val enteredWord = enterScramble!!.text.toString().trim()
-                        val url =
-                            "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
-                        val stringRequest = StringRequest(Request.Method.GET, url,
-                            { stringResponse ->
-                                Log.e(TAG, stringResponse)
-                                if (stringResponse.contains("meta")) {
-                                    Log.e(TAG, "Guessed a correct word from webster")
-                                    correctBool = true
-                                    if (enterScramble!!.text.toString().lowercase().trim()
-                                            .contentEquals(word.lowercase())
-                                        && word != ""
-                                    ) {
-                                        Log.e(TAG, "Correct")
+                        if (enterScramble!!.text.toString().lowercase().trim()
+                                .contentEquals(word.lowercase())
+                            && word != ""
+                        ) {
+                            Log.e(TAG, "Correct")
+                            correctBool = true
+                        }
+                        if(!correctBool) {
+                            val queue = Volley.newRequestQueue(this@GameActivity)
+                            val enteredWord = enterScramble!!.text.toString().trim()
+                            val url =
+                                "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
+                            val stringRequest = StringRequest(Request.Method.GET, url,
+                                { stringResponse ->
+                                    Log.e(TAG, stringResponse)
+                                    if (stringResponse.contains("meta")) {
+                                        Log.e(TAG, "Guessed a correct word from webster")
                                         correctBool = true
-                                    }
-                                }
-                            },
-                            { volleyError ->
-                                // handle error
-                                Log.e(TAG, "Error in getting word $volleyError")
-                            }
-                        )
-                        queue.add(stringRequest)
 
+                                    }
+                                },
+                                { volleyError ->
+                                    // handle error
+                                    Log.e(TAG, "Error in getting word $volleyError")
+                                }
+                            )
+                            queue.add(stringRequest)
+                        }
                     }
                 }
                 if (correctBool) {
