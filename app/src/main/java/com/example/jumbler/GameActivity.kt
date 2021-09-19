@@ -1,4 +1,4 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,12 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.example.scrambler.utils.Scrambler
+import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.io.File
@@ -160,7 +156,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                while(wordsArray.size < 1){
+                while (wordsArray.size < 1) {
                     delay(100L)
                 }
                 val wordNumber = randomNumber(1, wordsArray.size)
@@ -205,7 +201,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                             Log.e(TAG, "Correct")
                             correctBool = true
                         }
-                        if(!correctBool) {
+                        if (!correctBool) {
                             val queue = Volley.newRequestQueue(this@GameActivity)
                             val enteredWord = enterScramble!!.text.toString().trim()
                             val url =
@@ -307,7 +303,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun getUserInformation() {
-        val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
+        val userID = (this@GameActivity.application as Jumbler).getCurrentUser()
         val db = FirebaseFirestore.getInstance()
         val user = db.collection("Users")
         var username: String
@@ -374,7 +370,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun addToDatabase() {
         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
-        val userID = (this@GameActivity.application as Scrambler).getCurrentUser()
+        val userID = (this@GameActivity.application as Jumbler).getCurrentUser()
         val db = FirebaseFirestore.getInstance()
 
         scopeFirebaseAdd.launch(Dispatchers.Default) {

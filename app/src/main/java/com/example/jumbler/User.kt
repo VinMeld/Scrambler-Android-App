@@ -1,4 +1,4 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore

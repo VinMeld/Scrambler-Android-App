@@ -1,4 +1,4 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.content.Intent
 import android.graphics.RenderEffect

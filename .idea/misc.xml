@@ -27,10 +27,12 @@
         <entry key="app/src/main/res/layout/activity_register_user.xml" value="0.23504273504273504" />
         <entry key="app/src/main/res/layout/leaderboard_item.xml" value="0.17863247863247864" />
         <entry key="app/src/main/res/layout/leaderboard_list.xml" value="0.23504273504273504" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.24188034188034188" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.24188034188034188" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_15_PREVIEW" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

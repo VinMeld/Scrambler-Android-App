@@ -1,8 +1,8 @@
-package com.example.scrambler.utils
+package com.example.jumbler.utils
 
 import android.app.Application
 
-class Scrambler : Application() {
+class Jumbler : Application() {
     private var currentUuid: String? = null
     private var isOffline: Boolean = false
     fun getCurrentUser(): String? {

@@ -1,7 +1,6 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -13,18 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.google.firebase.FirebaseError
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.*
-import java.util.*
-import java.util.concurrent.Executors
-import androidx.annotation.NonNull
 import java.io.File
 import java.io.FileInputStream
-
+import java.util.*
+import java.util.concurrent.Executors
 
 open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     private var word = ""
@@ -86,7 +78,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                         Log.e(TAG, "Correct")
                         correctBool = true
                     }
-                    if(!correctBool){
+                    if (!correctBool) {
                         val queue = Volley.newRequestQueue(this@PracticeActivity)
                         val enteredWord = enterScramble?.text.toString().trim()
                         val url =
@@ -125,11 +117,11 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                             correctWords!!.text = getString(R.string.score, correct)
                         }
                         startGame()
-                        }
                     }
                 }
             }
         }
+    }
 
     override fun onClick(v: View) {
         when (v.id) {
@@ -146,10 +138,10 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     protected fun startGame() {
         Log.e(TAG, "StartGame")
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-            while(wordsArray.size < 1){
+            while (wordsArray.size < 1) {
                 delay(100L)
             }
-           val wordNumber = randomNumber(1, wordsArray.size)
+            val wordNumber = randomNumber(1, wordsArray.size)
 
             lastWord = word
             word = wordsArray[wordNumber]

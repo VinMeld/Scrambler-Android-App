@@ -1,4 +1,4 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.app.AlertDialog
 import android.content.Intent
@@ -7,7 +7,8 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.scrambler.utils.Scrambler
+import androidx.core.content.ContextCompat
+import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -42,7 +43,7 @@ class ProfileActivity : AppCompatActivity() {
                 .setNegativeButton(getString(R.string.delete_account)) { dialog, _ ->
                     coroutineDeleteStuff.launch(Default) {
                         val userID =
-                            (this@ProfileActivity.application as Scrambler).getCurrentUser()
+                            (this@ProfileActivity.application as Jumbler).getCurrentUser()
                         val reference = FirebaseDatabase.getInstance().getReference("Users")
                         // Realtime
                         launch {
@@ -111,6 +112,8 @@ class ProfileActivity : AppCompatActivity() {
                 }
             val alert = dialogBuilder.create()
             alert.show()
+            alert.getButton(AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(ContextCompat.getColor(this@ProfileActivity, R.color.red))
         }
 
         logout?.setOnClickListener {
@@ -137,7 +140,7 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         val reference = FirebaseDatabase.getInstance().getReference("Users")
-        val userID = (this.application as Scrambler).getCurrentUser()
+        val userID = (this.application as Jumbler).getCurrentUser()
         val greetingTextView = findViewById<TextView>(R.id.welcome)
         val emailTextView = findViewById<TextView>(R.id.textEmailAddress)
 
@@ -147,7 +150,8 @@ class ProfileActivity : AppCompatActivity() {
                     val userProfile = snapshot.getValue(User::class.java)
                     if (userProfile != null) {
                         runOnUiThread {
-                            greetingTextView?.text = getString(R.string.welcome_user, userProfile.username)
+                            greetingTextView?.text =
+                                getString(R.string.welcome_user, userProfile.username)
                             emailTextView?.text = userProfile.email
                         }
                     }

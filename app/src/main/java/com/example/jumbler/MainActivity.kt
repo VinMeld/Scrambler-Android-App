@@ -1,9 +1,9 @@
-package com.example.scrambler
+package com.example.jumbler
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -11,21 +11,16 @@ import android.util.Patterns
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.scrambler.utils.Scrambler
-import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
-import java.io.File
-import java.io.InputStream
-import android.net.NetworkInfo
-
-import android.net.ConnectivityManager
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.jumbler.utils.Jumbler
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
+import java.io.File
 import java.io.FileInputStream
 import java.util.concurrent.Executors
-
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var dimBackground: LinearLayout? = null
@@ -45,7 +40,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.textForgot -> startActivity(Intent(this, ForgotPassword::class.java))
         }
     }
-
 
     private fun userLogin() {
         val email = editTextEmail!!.text.toString().trim { it <= ' ' }
@@ -84,7 +78,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             if (task.isSuccessful) {
                 val user = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
-                    (this.application as Scrambler).setCurrentUser(user.uid)
+                    (this.application as Jumbler).setCurrentUser(user.uid)
                 }
                 if (user!!.isEmailVerified) {
                     val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
@@ -124,10 +118,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         progressBar!!.visibility = View.GONE
         super.onPause()
     }
+
     private fun isNetworkConnected(): Boolean {
         val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         return cm.activeNetworkInfo != null && cm.activeNetworkInfo!!.isConnected
     }
+
     private fun updateAllWords() {
         val scopeTimer = CoroutineScope(CoroutineName("Timer"))
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
@@ -145,7 +141,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         FileInputStream(file).bufferedReader().use { it.readText() }
                     val inputCount = inputAsString.split(" ").size
                     Log.e("TAG", inputAsString.toString())
-                    if(count == inputCount){
+                    if (count == inputCount) {
                         isSame = true
                         Log.e("TAG", "true")
                     }
@@ -190,6 +186,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val path = filesDir
@@ -197,10 +194,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val letDirectory = File(path, "wordsData")
         letDirectory.mkdirs()
         file = File(letDirectory, "words.txt")
-        if(isNetworkConnected()){
+        if (isNetworkConnected()) {
             updateAllWords()
         } else {
-            (this.application as Scrambler).setIsOffline(true)
+            (this.application as Jumbler).setIsOffline(true)
             startActivity(Intent(this@MainActivity, MenuActivity::class.java))
         }
         setContentView(R.layout.activity_main)
@@ -227,7 +224,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 if (task.isSuccessful) {
                     val user = FirebaseAuth.getInstance().currentUser
                     if (user != null) {
-                        (this.application as Scrambler).setCurrentUser(user.uid)
+                        (this.application as Jumbler).setCurrentUser(user.uid)
                         startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                     }
                 }

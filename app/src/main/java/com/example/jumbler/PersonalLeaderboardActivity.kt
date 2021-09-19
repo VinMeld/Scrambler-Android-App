@@ -1,4 +1,4 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,9 +10,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scrambler.utils.LeaderboardAdapter
-import com.example.scrambler.utils.LeaderboardItem
-import com.example.scrambler.utils.Scrambler
+import com.example.jumbler.utils.Jumbler
+import com.example.jumbler.utils.LeaderboardAdapter
+import com.example.jumbler.utils.LeaderboardItem
 import com.google.android.material.tabs.TabLayout
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
@@ -45,7 +45,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
 
         scopeLeaderboard.launch(Dispatchers.Default) {
             val userID =
-                (this@PersonalLeaderboardActivity.application as Scrambler).getCurrentUser()
+                (this@PersonalLeaderboardActivity.application as Jumbler).getCurrentUser()
             val db = FirebaseFirestore.getInstance()
             val user = db.collection("Users")
             val personalLeaderboard = launch {

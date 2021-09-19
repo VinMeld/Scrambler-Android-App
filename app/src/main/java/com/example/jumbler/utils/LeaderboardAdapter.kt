@@ -1,10 +1,10 @@
-package com.example.scrambler.utils
+package com.example.jumbler.utils
 
 import androidx.recyclerview.widget.RecyclerView
 import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
-import com.example.scrambler.R
+import com.example.jumbler.R
 import android.widget.TextView
 import java.lang.StringBuilder
 import java.util.ArrayList

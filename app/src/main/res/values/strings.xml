@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Scrambler</string>
+    <string name="app_name">Jumbler</string>
     <string name="cancel">Cancel</string>
     <string name="loading">Loading…</string>
     <string name="generic_error">An error has occurred. Please try again.</string>
@@ -24,7 +24,7 @@
     <string name="empty_password">Please enter a password.</string>
     <string name="invalid_password">Please enter a password that contains at least 6 alphanumeric characters.</string>
 
-    <string name="verify_email_snackbar">Welcome to Scrambler! Open the link sent to your email to verify your account.</string>
+    <string name="verify_email_snackbar">Welcome to Jumbler! Open the link sent to your email to verify your account.</string>
     <string name="email_taken">This email address is already in use. Please log in with your existing account, or create a new account with a different email address.</string>
     <string name="username_taken">This username is already taken. Please choose a different one.</string>
     <string name="new_account_success">An account has been successfully created. Open the link sent to your email to verify your account.</string>

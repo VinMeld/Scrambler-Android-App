@@ -1,12 +1,10 @@
-package com.example.scrambler
+package com.example.jumbler
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.scrambler.utils.Scrambler
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import java.io.FileInputStream
@@ -27,7 +25,7 @@ class MenuActivity : AppCompatActivity() {
         val file = File(letDirectory, "words.txt")
         val inputAsString = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
-        } catch(e: FileNotFoundException) {
+        } catch (e: FileNotFoundException) {
             ""
         }.toString()
         game.setOnClickListener {
