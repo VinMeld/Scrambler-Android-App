@@ -1,10 +1,12 @@
 package com.example.scrambler
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.*
@@ -12,6 +14,18 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.scrambler.utils.Scrambler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
+import java.io.File
+import java.io.InputStream
+import android.net.NetworkInfo
+
+import android.net.ConnectivityManager
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
+import kotlinx.coroutines.*
+import java.io.FileInputStream
+import java.util.concurrent.Executors
+
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var dimBackground: LinearLayout? = null
@@ -23,7 +37,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var progressBar: ProgressBar? = null
     private var remember: CheckBox? = null
     private var register: TextView? = null
-
+    private var file: File? = null
     override fun onClick(v: View) {
         when (v.id) {
             R.id.textRegister -> startActivity(Intent(this, RegisterUser::class.java))
@@ -31,6 +45,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.textForgot -> startActivity(Intent(this, ForgotPassword::class.java))
         }
     }
+
 
     private fun userLogin() {
         val email = editTextEmail!!.text.toString().trim { it <= ' ' }
@@ -109,9 +124,85 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         progressBar!!.visibility = View.GONE
         super.onPause()
     }
+    private fun isNetworkConnected(): Boolean {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        return cm.activeNetworkInfo != null && cm.activeNetworkInfo!!.isConnected
+    }
+    private fun updateAllWords() {
+        val scopeTimer = CoroutineScope(CoroutineName("Timer"))
+        scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            var isSame = false
+            var wait = 0
+            val queue1 = Volley.newRequestQueue(this@MainActivity)
+            val url1 =
+                "https://vinaycat.pythonanywhere.com/count"
+            val stringRequest1 = StringRequest(
+                Request.Method.GET, url1,
+                { stringResponse ->
+                    Log.e("TAG", stringResponse)
+                    val count = stringResponse.toInt()
+                    val inputAsString =
+                        FileInputStream(file).bufferedReader().use { it.readText() }
+                    val inputCount = inputAsString.split(" ").size
+                    Log.e("TAG", inputAsString.toString())
+                    if(count == inputCount){
+                        isSame = true
+                        Log.e("TAG", "true")
+                    }
+                    wait = 1
+                },
+                { volleyError ->
+                    // handle error
+                    Log.e("TAG", "Error in getting word $volleyError")
+                }
+            )
+            queue1.add(stringRequest1)
 
+            while (wait == 0) {
+                delay(10L)
+            }
+            Log.e("TAG", wait.toString())
+            Log.e("TAG", isSame.toString())
+            if (!isSame) {
+                Log.e("TAG", "deleting isSame")
+                file?.delete()
+                val queue = Volley.newRequestQueue(this@MainActivity)
+                val url =
+                    "https://vinaycat.pythonanywhere.com/all"
+                val stringRequest = StringRequest(
+                    Request.Method.GET, url,
+                    { stringResponse ->
+                        Log.e("TAG", stringResponse)
+                        val listOfWords = stringResponse.split(",")
+                        for (word in listOfWords) {
+                            file?.appendText(word + "\n")
+                        }
+                        val inputAsString =
+                            FileInputStream(file).bufferedReader().use { it.readText() }
+                        Log.e("TAG", inputAsString)
+                    },
+                    { volleyError ->
+                        // handle error
+                        Log.e("TAG", "Error in getting word $volleyError")
+                    }
+                )
+                queue.add(stringRequest)
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val path = filesDir
+        Log.e("|TAG", path.toString())
+        val letDirectory = File(path, "wordsData")
+        letDirectory.mkdirs()
+        file = File(letDirectory, "words.txt")
+        if(isNetworkConnected()){
+            updateAllWords()
+        } else {
+            (this.application as Scrambler).setIsOffline(true)
+            startActivity(Intent(this@MainActivity, MenuActivity::class.java))
+        }
         setContentView(R.layout.activity_main)
         register = findViewById(R.id.textRegister)
         register?.setOnClickListener(this)

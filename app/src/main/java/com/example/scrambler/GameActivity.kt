@@ -17,6 +17,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
+import java.io.File
+import java.io.FileInputStream
 import java.util.*
 import java.util.Collections.max
 import java.util.concurrent.Executors
@@ -66,20 +68,12 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             if (chances == 1) textViewChances!!.text =
                 getString(R.string.attempt_remaining, chances)
         }
-        val wordsRef = FirebaseDatabase.getInstance().getReference("WordList").child("listOfWords")
-        wordsRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    for (ds in dataSnapshot.children) {
-                        wordsArray.add(ds.value as String)
-                        Log.d("TAG", ds.value as String)
-                    }
-                }
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(TAG, error.toString())
-            }
-        })
+        val path = filesDir
+        val letDirectory = File(path, "wordsData")
+        val file = File(letDirectory, "words.txt")
+        val inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
+        wordsArray = inputAsString.split(" ") as MutableList<String>
+        Log.e(TAG, "size of words!!!! " + wordsArray.size)
         Log.e(TAG, "starting scramble from creation")
         startGame()
         // RESTART BUTTON

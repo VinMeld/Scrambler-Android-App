@@ -1,6 +1,7 @@
 package com.example.scrambler
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -21,11 +22,8 @@ import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.Executors
 import androidx.annotation.NonNull
-
-
-
-
-
+import java.io.File
+import java.io.FileInputStream
 
 
 open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
@@ -51,22 +49,12 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         enterScramble = findViewById(R.id.editTextWord)
         buttonRestart = findViewById(R.id.buttonPracticeRestart)
         apiKey = getString(R.string.parse_application_id)
-        val wordsRef = FirebaseDatabase.getInstance().getReference("WordList").child("listOfWords")
-        wordsRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    for (ds in dataSnapshot.children) {
-                        wordsArray.add(ds.value as String)
-                        Log.d("TAG", ds.value as String)
-                    }
-                }
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(TAG, error.toString())
-            }
-        })
-
-
+        val path = filesDir
+        val letDirectory = File(path, "wordsData")
+        val file = File(letDirectory, "words.txt")
+        val inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
+        wordsArray = inputAsString.split(" ") as MutableList<String>
+        Log.e(TAG, "size of words!!!! " + wordsArray.size)
         runOnUiThread {
             correctWords?.text = correct.toString()
         }
