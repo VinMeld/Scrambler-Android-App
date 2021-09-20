@@ -3,6 +3,7 @@
     <style name="Theme.Jumbler" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/lavender_dm</item>
+        <item name="colorAccent">@color/lavender_dm</item>
         <item name="colorOnPrimary">@color/black</item>
         <item name="colorError">@color/red</item>
         <!-- Status bar color. -->

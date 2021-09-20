@@ -4,7 +4,10 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -24,14 +27,52 @@ import kotlinx.coroutines.launch
 
 class ProfileActivity : AppCompatActivity() {
     private val TAG = "ProfileActivity"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
+
+        val activityView = findViewById<RelativeLayout>(R.id.userProfileView)
+        val deleteAccountButton = findViewById<Button>(R.id.buttonDeleteAccount)
+        val progressBar = findViewById<ProgressBar>(R.id.userProfileProgressBar)
+        val greetingTextView = findViewById<TextView>(R.id.welcome)
+        val emailTextView = findViewById<TextView>(R.id.textEmailAddress)
+        val reference = FirebaseDatabase.getInstance().getReference("Users")
+        val userID = (this.application as Jumbler).getCurrentUser()
+
+        if (userID != null) {
+            reference.child(userID).addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val userProfile = snapshot.getValue(User::class.java)
+                    if (userProfile != null) {
+                        runOnUiThread {
+                            greetingTextView.text =
+                                getString(R.string.welcome_user, userProfile.username)
+                            emailTextView?.text = userProfile.email
+                            progressBar.visibility = View.GONE
+                            activityView.visibility = View.VISIBLE
+                            deleteAccountButton.visibility = View.VISIBLE
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        getString(R.string.generic_error),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    progressBar.visibility = View.GONE
+                    activityView.visibility = View.VISIBLE
+                }
+            })
+        }
+
         val logout = findViewById<Button>(R.id.signOut)
         val menu = findViewById<Button>(R.id.buttonMenuMain)
-        val deleteAccount = findViewById<Button>(R.id.buttonDeleteAccount)
         val coroutineDeleteStuff = CoroutineScope(CoroutineName("Delete everything"))
-        deleteAccount.setOnClickListener {
+
+        deleteAccountButton.setOnClickListener {
             val dialogBuilder = AlertDialog.Builder(this@ProfileActivity)
             dialogBuilder.setMessage(getString(R.string.delete_account_warning))
                 .setTitle(R.string.delete_account)
@@ -137,34 +178,6 @@ class ProfileActivity : AppCompatActivity() {
         menu.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             startActivity(Intent(this@ProfileActivity, MenuActivity::class.java))
-        }
-
-        val reference = FirebaseDatabase.getInstance().getReference("Users")
-        val userID = (this.application as Jumbler).getCurrentUser()
-        val greetingTextView = findViewById<TextView>(R.id.welcome)
-        val emailTextView = findViewById<TextView>(R.id.textEmailAddress)
-
-        if (userID != null) {
-            reference.child(userID).addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val userProfile = snapshot.getValue(User::class.java)
-                    if (userProfile != null) {
-                        runOnUiThread {
-                            greetingTextView?.text =
-                                getString(R.string.welcome_user, userProfile.username)
-                            emailTextView?.text = userProfile.email
-                        }
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
-                        getString(R.string.generic_error),
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                }
-            })
         }
     }
 }

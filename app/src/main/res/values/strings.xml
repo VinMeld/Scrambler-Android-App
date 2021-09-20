@@ -62,7 +62,6 @@
     
     <!-- Account Settings -->
     <string name="account_settings">Account Settings</string>
-    <string name="welcome_placeholder">Welcome.</string>
     <string name="welcome_user">Welcome, %1$s.</string>
     <string name="sign_out">Sign Out</string>
     <string name="delete_account">Delete Account</string>

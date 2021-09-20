@@ -78,10 +78,12 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                             leaderboardIsEmpty = true
                                             emptyLeaderboardText?.visibility = View.VISIBLE
                                         }
+                                        progressbar!!.visibility = View.INVISIBLE
                                     }
                                 } else {
                                     runOnUiThread {
                                         leaderboardIsEmpty = true
+                                        progressbar!!.visibility = View.INVISIBLE
                                         emptyLeaderboardText?.visibility = View.VISIBLE
                                     }
                                 }
@@ -153,7 +155,6 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                 delay(100L)
             }
             runOnUiThread {
-                progressbar!!.visibility = View.INVISIBLE
                 leaderboardRecycler!!.visibility = View.VISIBLE
                 leaderboardTab!!.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                     override fun onTabSelected(tab: TabLayout.Tab?) {

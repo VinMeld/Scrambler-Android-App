@@ -6,9 +6,11 @@
     tools:context=".ProfileActivity">
 
     <RelativeLayout
+        android:id="@+id/userProfileView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center">
+        android:gravity="center"
+        android:visibility="gone">
 
         <ImageView
             android:id="@+id/userIcon"
@@ -34,7 +36,6 @@
             android:layout_below="@id/accountSettingsHeader"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="40dp"
-            android:text="@string/welcome_placeholder"
             android:textSize="20sp" />
 
         <TextView
@@ -75,5 +76,13 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
         android:backgroundTint="@color/red"
-        android:text="@string/delete_account" />
+        android:text="@string/delete_account"
+        android:visibility="gone" />
+
+    <ProgressBar
+        android:id="@+id/userProfileProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="visible" />
 </RelativeLayout>
