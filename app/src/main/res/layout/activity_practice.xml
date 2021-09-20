@@ -59,4 +59,15 @@
         android:text="@string/end_game"
         android:textAllCaps="false" />
 
+    <Button
+        android:id="@+id/buttonHint"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/buttonPracticeRestart"
+        android:layout_width="155dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:focusable="false"
+        android:soundEffectsEnabled="false"
+        android:text="@string/hint" />
+
 </RelativeLayout>

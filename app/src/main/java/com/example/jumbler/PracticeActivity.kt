@@ -27,10 +27,12 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     private var scrambledWord: TextView? = null
     private var enterScramble: EditText? = null
     private var buttonRestart: Button? = null
+    private var buttonHint: Button? = null
     private var lastWord = ""
     private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
     private var apiKey: String? = null
     private var wordsArray = mutableListOf<String>()
+    private var hintNumber = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_practice)
@@ -51,6 +53,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
             correctWords?.text = correct.toString()
         }
         startGame()
+        checkScrambler()
         buttonRestart!!.setOnClickListener {
             Log.e(TAG, "skip")
             startGame()
@@ -59,8 +62,24 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
             checkIfCorrect()
             false
         }
+        buttonHint!!.setOnClickListener{
+            val hintWord = word.substring(hintNumber)
+            runOnUiThread {
+                correctWords?.text = hintWord
+            }
+        }
     }
-
+    private fun checkScrambler(){
+        val scopeTimer = CoroutineScope(CoroutineName("Timer"))
+        scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            while(true){
+                if(enterScramble!!.text.length == word.length){
+                    checkIfCorrect()
+                }
+                delay(100L)
+            }
+        }
+    }
     private fun checkIfCorrect() {
         var correctBool = false
         if (word != "" || lastWord != word) {

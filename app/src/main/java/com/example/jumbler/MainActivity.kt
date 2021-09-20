@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var editTextEmail: EditText? = null
     private var editTextPassword: EditText? = null
     private var signIn: Button? = null
+    private var loginView: RelativeLayout? = null
+    private var appLaunchProgressView: RelativeLayout? = null
     private var mAuth: FirebaseAuth? = null
     private var progressBar: ProgressBar? = null
     private var remember: CheckBox? = null
@@ -124,7 +126,77 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         return cm.activeNetworkInfo != null && cm.activeNetworkInfo!!.isConnected
     }
+    private fun generateFileWords(length: Int, file: File) {
+        val scopeTimer = CoroutineScope(CoroutineName("Timer"))
+        scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            var isSame = false
+            var wait = 0
+            val queue1 = Volley.newRequestQueue(this@MainActivity)
+            val url1 = "https://vinaycat.pythonanywhere.com/getcountlengthword?length=$length"
+            val stringRequest1 = StringRequest(
+                Request.Method.GET, url1,
+                { stringResponse ->
+                    Log.e("TAG", stringResponse)
+                    val count = stringResponse.toInt()
+                    var inputAsString = ""
+                    inputAsString = try {
+                        FileInputStream(file).bufferedReader().use { it.readText() }
+                    } catch (e: FileNotFoundException){
+                        ""
+                    }
+                    val inputCount = inputAsString.split(" ").size
+                    if (count == inputCount) {
+                        isSame = true
+                        Log.e("TAG", "true")
+                    }
+                    wait = 1
+                },
+                { volleyError ->
+                    // handle error
+                    Log.e("TAG", "Error in getting word $volleyError")
+                }
+            )
+            queue1.add(stringRequest1)
 
+            while (wait == 0) {
+                delay(10L)
+            }
+            if (!isSame) {
+                Log.e("TAG", "deleting isSame")
+                file.delete()
+                val queue = Volley.newRequestQueue(this@MainActivity)
+                val url =
+                    "https://vinaycat.pythonanywhere.com/getlengthword?length=$length"
+                val stringRequest = StringRequest(
+                    Request.Method.GET, url,
+                    { stringResponse ->
+                        Log.e("TAG", stringResponse)
+                        val listOfWords = stringResponse.split(",")
+                        for (word in listOfWords) {
+                            file.appendText(word + "\n")
+                        }
+                        val inputAsString =
+                            FileInputStream(file).bufferedReader().use { it.readText() }
+                        Log.e("TAG", inputAsString)
+                    },
+                    { volleyError ->
+                        // handle error
+                        Log.e("TAG", "Error in getting word $volleyError")
+                    }
+                )
+                queue.add(stringRequest)
+            }
+        }
+    }
+    private fun createFilesAndGenerate(){
+        val path = filesDir
+        Log.e("|TAG", path.toString())
+        val letDirectory = File(path, "wordsData")
+        for (i in 2..12){
+            val file = File(letDirectory, "words$i.txt")
+            generateFileWords(i, file)
+        }
+    }
     private fun updateAllWords() {
         val scopeTimer = CoroutineScope(CoroutineName("Timer"))
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
@@ -200,12 +272,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         letDirectory.mkdirs()
         file = File(letDirectory, "words.txt")
         if (isNetworkConnected()) {
+            createFilesAndGenerate()
             updateAllWords()
         } else {
             (this.application as Jumbler).setIsOffline(true)
             startActivity(Intent(this@MainActivity, MenuActivity::class.java))
         }
         setContentView(R.layout.activity_main)
+        loginView = findViewById(R.id.loginActivity)
+        appLaunchProgressView = findViewById(R.id.appLaunchProgress)
         register = findViewById(R.id.textRegister)
         register?.setOnClickListener(this)
         signIn = findViewById(R.id.buttonLogin)
@@ -234,6 +309,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
+        } else {
+            appLaunchProgressView!!.visibility = View.GONE;
+            loginView!!.visibility = View.VISIBLE;
         }
         remember?.setOnCheckedChangeListener { buttonView, _ ->
             if (buttonView.isChecked) {

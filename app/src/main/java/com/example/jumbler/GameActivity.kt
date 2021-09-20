@@ -12,6 +12,7 @@ import com.android.volley.toolbox.Volley
 import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.protobuf.LazyStringArrayList
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
@@ -40,6 +41,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var highscore = 0
     private val user1: MutableMap<String, Any?> = HashMap()
     private var apiKey: String? = null
+    private var wordListLength = arrayOf<Array<String>>()
     private var wordsArray = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,10 +68,12 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
         val path = filesDir
         val letDirectory = File(path, "wordsData")
-        val file = File(letDirectory, "words.txt")
-        val inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
-        wordsArray = inputAsString.split(" ") as MutableList<String>
-        Log.e(TAG, "size of words!!!! " + wordsArray.size)
+
+        for(i in 2..12){
+            val file = File(letDirectory, "words$i.txt")
+            val inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
+            wordListLength += (inputAsString.split(" ") as MutableList<String>).toTypedArray()
+        }
         Log.e(TAG, "starting scramble from creation")
         startGame()
         // RESTART BUTTON
@@ -137,7 +141,19 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         val r = Random()
         return r.nextInt(high - low) + low
     }
-
+    private fun generateWord(first :Int, second : Int, third : Int){
+        val randomNum = randomNumber(1, 3)
+        if(randomNum == 1) {
+            val randomNum1 = randomNumber(0, wordListLength[first].size)
+            word = wordListLength[first][randomNum1]
+        } else if (randomNum == 2){
+            val randomNum1 = randomNumber(0, wordListLength[second].size)
+            word = wordListLength[second][randomNum1]
+        } else if (randomNum == 3){
+            val randomNum1 = randomNumber(0, wordListLength[third].size)
+            word = wordListLength[third][randomNum1]
+        }
+    }
     private fun startGame() {
         Log.e(TAG, "StartGame")
         runOnUiThread {
@@ -145,10 +161,10 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             delay(1000L)
-            val waitLength = 16
+            val waitLength = 15
             val guess = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 // Wait for UI to actually change on screen.
-                while (seconds < waitLength) {
+                while (seconds <= waitLength) {
                     runOnUiThread { timerText!!.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
                     delay(1000L)
@@ -156,26 +172,65 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                while (wordsArray.size < 1) {
-                    delay(100L)
-                }
-                val wordNumber = randomNumber(1, wordsArray.size)
-
                 lastWord = word
-                word = wordsArray[wordNumber]
-                val random = Random()
-                Log.e(TAG, "Resetting randomwordscramble")
-                val a: CharArray = word.toCharArray()
-                for (i in a.indices) {
-                    val j: Int = random.nextInt(a.size)
-                    // Swap letters
-                    val temp = a[i]
-                    a[i] = a[j]
-                    a[j] = temp
+                if(correct in 0..5){
+                    generateWord(0,1,2)
                 }
-                randomWordScrambled = String(a)
-                if (word.length == 1) {
-                    randomWordScrambled = word
+                if(correct in 6..10){
+                    val newRandomNum = randomNumber(1, 10)
+                    if(newRandomNum in 1..3) {
+                        generateWord(0,1,2)
+                    } else {
+                        generateWord(3,4,5)
+                    }
+                }
+                if(correct in 11..15){
+                    val newRandomNum = randomNumber(1, 10)
+                    if(newRandomNum in 1..2) {
+                        generateWord(0,1,2)
+                    } else if(newRandomNum in 3..4) {
+                        generateWord(3,4,5)
+                    } else{
+                        generateWord(6,7,8)
+                    }
+                }
+                if(correct in 16..20) {
+                    val newRandomNum = randomNumber(1, 20)
+                    if (newRandomNum in 1..2) {
+                        generateWord(0, 1, 2)
+                    } else if (newRandomNum in 3..4) {
+                        generateWord(3, 4, 5)
+                    } else if (newRandomNum in 5..10) {
+                        generateWord(6, 7, 8)
+                    } else {
+                        generateWord(9, 10, 11)
+                    }
+                }
+                if(correct > 20){
+                    val newRandomNum = randomNumber(1, 30)
+                    if (newRandomNum in 1..2) {
+                        generateWord(0, 1, 2)
+                    } else if (newRandomNum in 3..10) {
+                        generateWord(3, 4, 5)
+                    } else if (newRandomNum in 11..20) {
+                        generateWord(6, 7, 8)
+                    } else {
+                        generateWord(9, 10, 11)
+                    }
+                }
+                randomWordScrambled = word
+                while(randomWordScrambled == word) {
+                    val random = Random()
+                    Log.e(TAG, "Resetting randomwordscramble")
+                    val a: CharArray = word.toCharArray()
+                    for (i in a.indices) {
+                        val j: Int = random.nextInt(a.size)
+                        // Swap letters
+                        val temp = a[i]
+                        a[i] = a[j]
+                        a[j] = temp
+                    }
+                    randomWordScrambled = String(a)
                 }
                 seconds = 1
                 // Display timer and set random word
@@ -212,7 +267,6 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                                     if (stringResponse.contains("meta")) {
                                         Log.e(TAG, "Guessed a correct word from webster")
                                         correctBool = true
-
                                     }
                                 },
                                 { volleyError ->

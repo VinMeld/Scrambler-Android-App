@@ -76,4 +76,5 @@
     <string name="reset_password_empty_email">Please enter your email address to reset your password.</string>
     <string name="reset_password_check_email">Open the link sent to your email to reset your password.</string>
     <string name="reset_password_error">No accounts with this email address currently exist. Please check your input and try again.</string>
+    <string name="hint">Hint</string>
 </resources>

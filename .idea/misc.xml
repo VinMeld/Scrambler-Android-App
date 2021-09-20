@@ -8,6 +8,7 @@
         <entry key="..\:/Users/vinay/AndroidStudioProjects/Scrambler2/app/src/main/res/layout/activity_main.xml" value="0.4" />
         <entry key="..\:/Users/vinay/AndroidStudioProjects/Scrambler2/app/src/main/res/layout/activity_menu.xml" value="0.264" />
         <entry key="..\:/Users/vinay/AndroidStudioProjects/Scrambler2/app/src/main/res/layout/activity_personal_leaderboard.xml" value="0.3671875" />
+        <entry key="..\:/Users/vinay/AndroidStudioProjects/Scrambler2/app/src/main/res/layout/activity_practice.xml" value="0.264" />
         <entry key="..\:/Users/vinay/AndroidStudioProjects/Scrambler2/app/src/main/res/layout/activity_profile.xml" value="0.264" />
         <entry key="app/src/main/res/layout-land/activity_forgot_password.xml" value="0.3416666666666667" />
         <entry key="app/src/main/res/layout-land/activity_game.xml" value="0.28034188034188035" />
@@ -27,12 +28,10 @@
         <entry key="app/src/main/res/layout/activity_register_user.xml" value="0.23504273504273504" />
         <entry key="app/src/main/res/layout/leaderboard_item.xml" value="0.17863247863247864" />
         <entry key="app/src/main/res/layout/leaderboard_list.xml" value="0.23504273504273504" />
-        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.24188034188034188" />
-        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.24188034188034188" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_15_PREVIEW" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">
