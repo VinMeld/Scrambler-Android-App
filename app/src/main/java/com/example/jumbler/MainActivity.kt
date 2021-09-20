@@ -197,83 +197,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             generateFileWords(i, file)
         }
     }
-    private fun updateAllWords() {
-        val scopeTimer = CoroutineScope(CoroutineName("Timer"))
-        scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-            var isSame = false
-            var wait = 0
-            val queue1 = Volley.newRequestQueue(this@MainActivity)
-            val url1 =
-                "https://vinaycat.pythonanywhere.com/count"
-            val stringRequest1 = StringRequest(
-                Request.Method.GET, url1,
-                { stringResponse ->
-                    Log.e("TAG", stringResponse)
-                    val count = stringResponse.toInt()
-                    var inputAsString = ""
-                    inputAsString = try {
-                        FileInputStream(file).bufferedReader().use { it.readText() }
-                    } catch (e: FileNotFoundException){
-                        ""
-                    }
-                    val inputCount = inputAsString.split(" ").size
-                    Log.e("TAG", inputAsString.toString())
-                    if (count == inputCount) {
-                        isSame = true
-                        Log.e("TAG", "true")
-                    }
-                    wait = 1
-                },
-                { volleyError ->
-                    // handle error
-                    Log.e("TAG", "Error in getting word $volleyError")
-                }
-            )
-            queue1.add(stringRequest1)
-
-            while (wait == 0) {
-                delay(10L)
-            }
-            Log.e("TAG", wait.toString())
-            Log.e("TAG", isSame.toString())
-            if (!isSame) {
-                Log.e("TAG", "deleting isSame")
-                file?.delete()
-                val queue = Volley.newRequestQueue(this@MainActivity)
-                val url =
-                    "https://vinaycat.pythonanywhere.com/all"
-                val stringRequest = StringRequest(
-                    Request.Method.GET, url,
-                    { stringResponse ->
-                        Log.e("TAG", stringResponse)
-                        val listOfWords = stringResponse.split(",")
-                        for (word in listOfWords) {
-                            file?.appendText(word + "\n")
-                        }
-                        val inputAsString =
-                            FileInputStream(file).bufferedReader().use { it.readText() }
-                        Log.e("TAG", inputAsString)
-                    },
-                    { volleyError ->
-                        // handle error
-                        Log.e("TAG", "Error in getting word $volleyError")
-                    }
-                )
-                queue.add(stringRequest)
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val path = filesDir
-        Log.e("|TAG", path.toString())
-        val letDirectory = File(path, "wordsData")
-        letDirectory.mkdirs()
-        file = File(letDirectory, "words.txt")
         if (isNetworkConnected()) {
             createFilesAndGenerate()
-            updateAllWords()
         } else {
             (this.application as Jumbler).setIsOffline(true)
             startActivity(Intent(this@MainActivity, MenuActivity::class.java))
