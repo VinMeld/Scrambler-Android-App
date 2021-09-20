@@ -20,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
@@ -137,8 +138,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 { stringResponse ->
                     Log.e("TAG", stringResponse)
                     val count = stringResponse.toInt()
-                    val inputAsString =
+                    var inputAsString = ""
+                    inputAsString = try {
                         FileInputStream(file).bufferedReader().use { it.readText() }
+                    } catch (e: FileNotFoundException){
+                        ""
+                    }
                     val inputCount = inputAsString.split(" ").size
                     Log.e("TAG", inputAsString.toString())
                     if (count == inputCount) {
