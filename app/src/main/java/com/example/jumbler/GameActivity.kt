@@ -25,7 +25,8 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var randomWordScrambled = ""
     private var correct = 0
     private var chances = 3
-    private var seconds = 0
+    private var waitLength = 20
+    private var seconds = waitLength
     private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
     private val getUser = CoroutineScope(CoroutineName("getUser"))
     private var menu: Button? = null
@@ -88,7 +89,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 getUserHighScore()
                 chances = 3
                 correct = 0
-                seconds = 1
+                seconds = waitLength
                 runOnUiThread {
                     correctWords!!.text = getString(R.string.score, correct)
                     if (chances != 1) textViewChances!!.text =
@@ -161,25 +162,24 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             delay(1000L)
-            val waitLength = 15
             val guess = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 // Wait for UI to actually change on screen.
-                while (seconds <= waitLength) {
+                while (seconds >= 0) {
                     runOnUiThread { timerText!!.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
                     delay(1000L)
-                    seconds += 1
+                    seconds--
                 }
             }
             launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 lastWord = word
                 if(correct in 0..5){
-                    generateWord(0,1,2)
+                    generateWord(1,1,2)
                 }
                 if(correct in 6..10){
                     val newRandomNum = randomNumber(1, 10)
                     if(newRandomNum in 1..3) {
-                        generateWord(0,1,2)
+                        generateWord(2,2,3)
                     } else {
                         generateWord(3,4,5)
                     }
@@ -187,17 +187,18 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 if(correct in 11..15){
                     val newRandomNum = randomNumber(1, 10)
                     if(newRandomNum in 1..2) {
-                        generateWord(0,1,2)
+                        generateWord(2,3,3)
                     } else if(newRandomNum in 3..4) {
-                        generateWord(3,4,5)
+                        generateWord(4,4,5)
                     } else{
-                        generateWord(6,7,8)
+                        generateWord(6,8,8)
                     }
                 }
                 if(correct in 16..20) {
+                    waitLength = 15
                     val newRandomNum = randomNumber(1, 20)
                     if (newRandomNum in 1..2) {
-                        generateWord(0, 1, 2)
+                        generateWord(3,3,4)
                     } else if (newRandomNum in 3..4) {
                         generateWord(3, 4, 5)
                     } else if (newRandomNum in 5..10) {
@@ -207,17 +208,19 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
                 if(correct > 20){
+                    waitLength = 15
                     val newRandomNum = randomNumber(1, 30)
                     if (newRandomNum in 1..2) {
-                        generateWord(0, 1, 2)
+                        generateWord(5,5,5)
                     } else if (newRandomNum in 3..10) {
-                        generateWord(3, 4, 5)
+                        generateWord(6, 6, 7)
                     } else if (newRandomNum in 11..20) {
-                        generateWord(6, 7, 8)
+                        generateWord(7, 7, 8)
                     } else {
                         generateWord(9, 10, 11)
                     }
                 }
+                Log.e(TAG, word)
                 randomWordScrambled = word
                 while(randomWordScrambled == word) {
                     val random = Random()
@@ -232,7 +235,8 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                     randomWordScrambled = String(a)
                 }
-                seconds = 1
+                Log.e(TAG, "scrambled word $randomWordScrambled")
+                seconds = waitLength
                 // Display timer and set random word
                 runOnUiThread {
                     scrambledWord!!.text = randomWordScrambled
@@ -241,52 +245,55 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             var correctBool = false
-
+            var lastGuess = ""
             while (!guess.isCompleted) {
-                if (enterScramble!!.text.toString().trim().length == word.length) {
-                    if (sameChars(
-                            enterScramble!!.text.toString().trim().lowercase(),
-                            word.lowercase()
-                        )
-                    ) {
-                        if (enterScramble!!.text.toString().lowercase().trim()
-                                .contentEquals(word.lowercase())
-                            && word != ""
-                        ) {
-                            Log.e(TAG, "Correct")
-                            correctBool = true
-                        }
-                        if (!correctBool) {
-                            val queue = Volley.newRequestQueue(this@GameActivity)
-                            val enteredWord = enterScramble!!.text.toString().trim()
-                            val url =
-                                "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
-                            val stringRequest = StringRequest(Request.Method.GET, url,
-                                { stringResponse ->
-                                    Log.e(TAG, stringResponse)
-                                    if (stringResponse.contains("meta")) {
-                                        Log.e(TAG, "Guessed a correct word from webster")
-                                        correctBool = true
-                                    }
-                                },
-                                { volleyError ->
-                                    // handle error
-                                    Log.e(TAG, "Error in getting word $volleyError")
-                                }
+                    if (enterScramble!!.text.toString().trim().length == word.length) {
+                        if (sameChars(
+                                enterScramble!!.text.toString().trim().lowercase(),
+                                word.lowercase()
                             )
-                            queue.add(stringRequest)
+                        ) {
+                            if (enterScramble!!.text.toString().lowercase().trim()
+                                    .contentEquals(word.lowercase())
+                                && word != ""
+                            ) {
+                                Log.e(TAG, "Correct")
+                                correctBool = true
+                            }
+                            if (lastGuess != enterScramble!!.text.toString()) {
+                                lastGuess = enterScramble!!.text.toString()
+                                if (!correctBool) {
+                                val queue = Volley.newRequestQueue(this@GameActivity)
+                                val enteredWord = enterScramble!!.text.toString().trim()
+                                val url =
+                                    "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
+                                val stringRequest = StringRequest(Request.Method.GET, url,
+                                    { stringResponse ->
+                                        Log.e(TAG, stringResponse)
+                                        if (stringResponse.contains("meta")) {
+                                            Log.e(TAG, "Guessed a correct word from webster")
+                                            correctBool = true
+                                        }
+                                    },
+                                    { volleyError ->
+                                        // handle error
+                                        Log.e(TAG, "Error in getting word $volleyError")
+                                    }
+                                )
+                                queue.add(stringRequest)
+                            }
                         }
                     }
-                }
-                if (correctBool) {
-                    break
+                    if (correctBool) {
+                        break
+                    }
                 }
                 delay(500L)
             }
             when {
                 // If they got it right then cancel guess and restart
                 correctBool -> {
-                    seconds = 1
+                    seconds = waitLength
                     guess.cancelAndJoin()
                     correctProcedure()
                 }
@@ -318,7 +325,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                             getString(R.string.attempt_remaining, chances)
                     }
                     delay(1000L)
-                    seconds = 1
+                    seconds = waitLength
                     Log.e(TAG, "starting scramble from missing")
                     startGame()
                 }

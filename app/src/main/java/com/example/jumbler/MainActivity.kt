@@ -31,8 +31,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var editTextEmail: EditText? = null
     private var editTextPassword: EditText? = null
     private var signIn: Button? = null
-    private var loginView: RelativeLayout? = null
-    private var appLaunchProgressView: RelativeLayout? = null
     private var mAuth: FirebaseAuth? = null
     private var progressBar: ProgressBar? = null
     private var remember: CheckBox? = null
