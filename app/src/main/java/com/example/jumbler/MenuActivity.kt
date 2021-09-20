@@ -75,4 +75,8 @@ class MenuActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onBackPressed() {
+        return;
+    }
 }

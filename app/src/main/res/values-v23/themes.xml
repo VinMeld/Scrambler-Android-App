@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Theme.Jumbler" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/lavender</item>
         <item name="colorOnPrimary">@color/white</item>
+        <item name="colorAccent">@color/lavender</item>
         <item name="colorError">@color/red</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?android:windowBackground</item>

@@ -3,84 +3,97 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     tools:context=".ProfileActivity">
 
     <RelativeLayout
-        android:id="@+id/appBrandingLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="50dp">
+        android:id="@+id/userProfileView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:visibility="gone">
 
-        <ImageView
-            android:id="@+id/userIcon"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_centerHorizontal="true"
-            android:contentDescription="@string/account_settings"
-            android:src="@drawable/ic_baseline_supervisor_account_24" />
-
-        <TextView
-            android:id="@+id/accountSettingsHeader"
+        <RelativeLayout
+            android:id="@+id/appBrandingLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/userIcon"
-            android:layout_centerHorizontal="true"
-            android:text="@string/account_settings"
-            android:textSize="30sp" />
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="50dp">
 
-        <Button
-            android:id="@+id/buttonMenuMain"
-            android:layout_width="170dp"
+            <ImageView
+                android:id="@+id/userIcon"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_centerHorizontal="true"
+                android:contentDescription="@string/account_settings"
+                android:src="@drawable/ic_baseline_supervisor_account_24" />
+
+            <TextView
+                android:id="@+id/accountSettingsHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/userIcon"
+                android:layout_centerHorizontal="true"
+                android:text="@string/account_settings"
+                android:textSize="30sp" />
+
+            <Button
+                android:id="@+id/buttonMenuMain"
+                android:layout_width="170dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/accountSettingsHeader"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="40dp"
+                android:text="@string/return_to_menu"
+                android:textAllCaps="false" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/accountSettingsHeader"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="40dp"
-            android:text="@string/return_to_menu"
-            android:textAllCaps="false" />
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/appBrandingLayout">
+
+            <TextView
+                android:id="@+id/welcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/textEmailAddress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/welcome"
+                android:layout_centerHorizontal="true"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/signOut"
+                android:layout_width="170dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textEmailAddress"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"
+                android:text="@string/sign_out"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/buttonDeleteAccount"
+                android:layout_width="170dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/signOut"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="40dp"
+                android:backgroundTint="@color/red"
+                android:text="@string/delete_account" />
+        </RelativeLayout>
     </RelativeLayout>
 
-    <RelativeLayout
+    <ProgressBar
+        android:id="@+id/userProfileProgressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@id/appBrandingLayout">
-
-        <TextView
-            android:id="@+id/welcome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:text="@string/welcome_placeholder"
-            android:textSize="20sp" />
-
-        <TextView
-            android:id="@+id/textEmailAddress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/welcome"
-            android:layout_centerHorizontal="true"
-            android:textSize="16sp" />
-
-        <Button
-            android:id="@+id/signOut"
-            android:layout_width="170dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textEmailAddress"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"
-            android:text="@string/sign_out"
-            android:textAllCaps="false" />
-
-        <Button
-            android:id="@+id/buttonDeleteAccount"
-            android:layout_width="170dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/signOut"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="40dp"
-            android:backgroundTint="@color/red"
-            android:text="@string/delete_account" />
-    </RelativeLayout>
+        android:layout_centerInParent="true"
+        android:visibility="visible" />
 </RelativeLayout>

@@ -25,6 +25,8 @@ import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var dimBackground: LinearLayout? = null
+    private var loginView: RelativeLayout? = null
+    private var appLaunchProgressView: RelativeLayout? = null
     private var forgotPassword: TextView? = null
     private var editTextEmail: EditText? = null
     private var editTextPassword: EditText? = null
@@ -313,6 +315,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             appLaunchProgressView!!.visibility = View.GONE;
             loginView!!.visibility = View.VISIBLE;
         }
+
         remember?.setOnCheckedChangeListener { buttonView, _ ->
             if (buttonView.isChecked) {
                 getSharedPreferences("checkbox", MODE_PRIVATE).edit().putString("remember", "true")
