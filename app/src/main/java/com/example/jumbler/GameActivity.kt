@@ -156,6 +156,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
     private fun startGame() {
+        var correctWord = ""
         Log.e(TAG, "StartGame")
         runOnUiThread {
             timerText!!.visibility = View.VISIBLE
@@ -235,6 +236,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
                     randomWordScrambled = String(a)
                 }
+                correctWord = word
                 Log.e(TAG, "scrambled word $randomWordScrambled")
                 seconds = waitLength
                 // Display timer and set random word
@@ -247,6 +249,9 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             var correctBool = false
             var lastGuess = ""
             while (!guess.isCompleted) {
+                if(seconds == 0){
+                    word = ""
+                }
                     if (enterScramble!!.text.toString().trim().length == word.length) {
                         if (sameChars(
                                 enterScramble!!.text.toString().trim().lowercase(),
@@ -302,7 +307,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 !correctBool && chances == 1 -> {
                     chances--
                     runOnUiThread {
-                        textViewFlash!!.text = getString(R.string.game_over_text, word)
+                        textViewFlash!!.text = getString(R.string.game_over_text, correctWord)
                         textViewFlash!!.visibility = View.VISIBLE
                         textViewChances!!.text = getString(R.string.attempts_remaining, chances)
                         enterScramble!!.visibility = View.INVISIBLE
@@ -312,7 +317,8 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 // If they got it wrong, subtract chances and restart
                 !correctBool -> {
                     runOnUiThread {
-                        textViewFlash!!.text = getString(R.string.incorrect_answer, word)
+                        enterScramble!!.text.clear()
+                        textViewFlash!!.text = getString(R.string.incorrect_answer, correctWord)
                         textViewFlash!!.visibility = View.VISIBLE
                     }
                     Log.e(TAG, "Got wrong")

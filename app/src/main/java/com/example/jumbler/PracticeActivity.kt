@@ -60,6 +60,11 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         checkScrambler()
         buttonRestart!!.setOnClickListener {
             Log.e(TAG, "skip")
+            hintNumber = 0
+            runOnUiThread {
+                enterScramble!!.text.clear()
+                correctWords!!.text = getString(R.string.score, correct)
+            }
             startGame()
         }
         buttonHint!!.setOnClickListener {
@@ -75,7 +80,8 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                         hintNumber = 0
                         delay(1000L)
                         runOnUiThread {
-                            correctWords?.text = correct.toString()
+                            enterScramble!!.text.clear()
+                            correctWords!!.text = getString(R.string.score, correct)
                         }
                         startGame()
                     } else {
