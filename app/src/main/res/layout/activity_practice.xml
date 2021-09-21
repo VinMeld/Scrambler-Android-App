@@ -4,7 +4,16 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/textViewPracticeCorrect"
+        android:id="@+id/practiceHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/practiceScore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -14,60 +23,77 @@
         android:textSize="20sp" />
 
     <TextView
-        android:id="@+id/practiceTextWord"
+        android:id="@+id/practiceScrambledWord"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textViewPracticeCorrect"
+        android:layout_below="@id/practiceScore"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="105dp"
         android:text="@string/loading"
         android:textSize="34sp" />
 
     <EditText
-        android:id="@+id/editTextWord"
+        android:id="@+id/practiceEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/practiceTextWord"
+        android:layout_below="@id/practiceScrambledWord"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
         android:ems="10"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:hint="@string/enter_word"
         android:importantForAutofill="no"
         android:inputType="text" />
 
-    <Button
-        android:id="@+id/buttonPracticeRestart"
-        android:layout_width="155dp"
+    <TextView
+        android:id="@+id/practiceWordSolution"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/editTextWord"
+        android:layout_below="@id/practiceEditText"
         android:layout_centerHorizontal="true"
+        android:layout_marginHorizontal="20dp"
         android:layout_marginTop="20dp"
-        android:focusable="false"
-        android:soundEffectsEnabled="false"
-        android:text="@string/skip_word"
-        android:textAllCaps="false" />
-
-    <Button
-        android:id="@+id/buttonPracticeMenu"
-        android:layout_width="155dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"
-        android:focusable="false"
-        android:soundEffectsEnabled="false"
-        android:text="@string/end_game"
-        android:textAllCaps="false" />
+        android:textAlignment="center"
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/buttonHint"
         android:layout_width="155dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/buttonPracticeRestart"
+        android:layout_below="@id/practiceWordSolution"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:focusable="false"
         android:soundEffectsEnabled="false"
-        android:text="@string/hint" />
+        android:text="@string/hint"
+        android:textAllCaps="false" />
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp">
+
+        <Button
+            android:id="@+id/buttonPracticeRestart"
+            android:layout_width="155dp"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:soundEffectsEnabled="false"
+            android:text="@string/skip_word"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/buttonPracticeMenu"
+            android:layout_width="155dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_toEndOf="@id/buttonPracticeRestart"
+            android:focusable="false"
+            android:soundEffectsEnabled="false"
+            android:text="@string/end_game"
+            android:textAllCaps="false" />
+    </RelativeLayout>
 </RelativeLayout>

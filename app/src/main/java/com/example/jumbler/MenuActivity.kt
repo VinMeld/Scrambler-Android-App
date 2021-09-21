@@ -15,26 +15,27 @@ class MenuActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
 
-        val game = findViewById<Button>(R.id.buttonStart)
-        val profile = findViewById<Button>(R.id.buttonProfile)
-        val leaderboard = findViewById<Button>(R.id.buttonLeaderboard)
-        val practice = findViewById<Button>(R.id.buttonPractice)
-        val path = filesDir
-        Log.e("|TAG", path.toString())
-        val letDirectory = File(path, "wordsData")
+        val game: Button = findViewById(R.id.buttonStart)
+        val profile: Button = findViewById(R.id.buttonProfile)
+        val leaderboard: Button = findViewById(R.id.buttonLeaderboard)
+        val practice: Button = findViewById(R.id.buttonPractice)
+        Log.e("|TAG", filesDir.toString())
+        val letDirectory = File(filesDir, "wordsData")
         val file = File(letDirectory, "words.txt")
-        val inputAsString = try {
+        val inputAsString: String = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
         } catch (e: FileNotFoundException) {
             ""
         }.toString()
+
         game.setOnClickListener {
             if (inputAsString != "") {
                 startActivity(Intent(this@MenuActivity, GameActivity::class.java))
             } else {
+                // TODO: Update all words text file to search for an the other file ?? what
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    "Get on a network and restart app!",
+                    getString(R.string.dictionary_error),
                     Snackbar.LENGTH_LONG
                 ).show()
             }
@@ -69,7 +70,7 @@ class MenuActivity : AppCompatActivity() {
             } else {
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    "Get on a network and restart app!",
+                    getString(R.string.dictionary_error),
                     Snackbar.LENGTH_LONG
                 ).show()
             }
@@ -77,6 +78,6 @@ class MenuActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        return;
+        return
     }
 }

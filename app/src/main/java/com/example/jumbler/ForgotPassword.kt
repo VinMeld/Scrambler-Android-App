@@ -1,9 +1,12 @@
 package com.example.jumbler
 
+import android.content.Intent
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Patterns
 import android.view.View
 import android.widget.Button
@@ -16,35 +19,30 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 class ForgotPassword : AppCompatActivity() {
-    private var dimBackground: LinearLayout? = null
-    private var emailEditText: EditText? = null
-    private var resetPasswordButton: Button? = null
-    private var progressBar: ProgressBar? = null
-    private var auth: FirebaseAuth? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_forgot_password)
-        emailEditText = findViewById(R.id.email)
-        resetPasswordButton = findViewById(R.id.resetPassword)
-        progressBar = findViewById(R.id.progressBar2)
-        auth = FirebaseAuth.getInstance()
-        resetPasswordButton?.setOnClickListener { resetPassword() }
+        val resetPasswordButton: Button = findViewById(R.id.resetPassword)
+        resetPasswordButton.setOnClickListener { resetPassword() }
     }
 
     private fun resetPassword() {
-        val email = emailEditText!!.text.toString().trim { it <= ' ' }
+        val emailEditText: EditText = findViewById(R.id.email)
+        val email: String = emailEditText.text.toString().trim { it <= ' ' }
+
         if (email.isEmpty()) {
-            emailEditText!!.error = getString(R.string.reset_password_empty_email)
-            emailEditText!!.requestFocus()
-            return
-        }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailEditText!!.error = getString(R.string.invalid_email)
-            emailEditText!!.requestFocus()
+            emailEditText.error = getString(R.string.reset_password_empty_email)
+            emailEditText.requestFocus()
             return
         }
 
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailEditText.error = getString(R.string.invalid_email)
+            emailEditText.requestFocus()
+            return
+        }
+
+        val dimBackground: LinearLayout = findViewById(R.id.dimBackground)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             findViewById<View>(R.id.forgotPasswordActivity).setRenderEffect(
                 RenderEffect.createBlurEffect(
@@ -54,25 +52,36 @@ class ForgotPassword : AppCompatActivity() {
                 )
             )
         } else {
-            dimBackground = findViewById(R.id.dimBackground)
-            dimBackground!!.visibility = View.VISIBLE
+            dimBackground.visibility = View.VISIBLE
         }
-        progressBar!!.visibility = View.VISIBLE
 
-        auth!!.sendPasswordResetEmail(email).addOnCompleteListener { task ->
+        val progressBar: ProgressBar = findViewById(R.id.progressBar2)
+        progressBar.visibility = View.VISIBLE
+
+        val auth: FirebaseAuth = FirebaseAuth.getInstance()
+        auth.sendPasswordResetEmail(email).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Snackbar.make(
                     findViewById(android.R.id.content),
                     getString(R.string.reset_password_check_email),
                     Snackbar.LENGTH_LONG
                 ).show()
+                Handler(Looper.getMainLooper()).postDelayed({
+                    startActivity(
+                        Intent(
+                            this@ForgotPassword,
+                            MainActivity::class.java
+                        )
+                    )
+                }, 2750)
             }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 findViewById<View>(R.id.forgotPasswordActivity).setRenderEffect(null)
             } else {
-                dimBackground!!.visibility = View.GONE
+                dimBackground.visibility = View.GONE
             }
-            progressBar!!.visibility = View.GONE
+            progressBar.visibility = View.GONE
         }
             .addOnFailureListener { exception ->
                 if (exception is FirebaseAuthInvalidUserException) {

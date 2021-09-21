@@ -6,31 +6,31 @@
     tools:context=".ProfileActivity">
 
     <RelativeLayout
-        android:id="@+id/userProfileView"
+        android:id="@+id/settingsView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
         android:visibility="gone">
 
         <ImageView
-            android:id="@+id/userIcon"
+            android:id="@+id/settingsIcon"
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_centerHorizontal="true"
-            android:contentDescription="@string/account_settings"
-            android:src="@drawable/ic_baseline_supervisor_account_24" />
+            android:contentDescription="@string/settings"
+            android:src="@drawable/ic_baseline_settings_24" />
 
         <TextView
             android:id="@+id/accountSettingsHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/userIcon"
+            android:layout_below="@id/settingsIcon"
             android:layout_centerHorizontal="true"
-            android:text="@string/account_settings"
+            android:text="@string/settings"
             android:textSize="30sp" />
 
         <TextView
-            android:id="@+id/welcome"
+            android:id="@+id/settingsUserName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/accountSettingsHeader"
@@ -42,16 +42,38 @@
             android:id="@+id/textEmailAddress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/welcome"
+            android:layout_below="@id/settingsUserName"
             android:layout_centerHorizontal="true"
             android:text=""
             android:textSize="16sp" />
+
+        <RelativeLayout
+            android:id="@+id/displayModePane"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/textEmailAddress"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp">
+
+            <TextView
+                android:id="@+id/displayModeTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/appearance"
+                android:textSize="16sp" />
+
+            <Spinner
+                android:id="@+id/displayModeSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/displayModeTitle" />
+        </RelativeLayout>
 
         <Button
             android:id="@+id/buttonMenuMain"
             android:layout_width="170dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/textEmailAddress"
+            android:layout_below="@id/displayModePane"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="20dp"
             android:text="@string/return_to_menu"

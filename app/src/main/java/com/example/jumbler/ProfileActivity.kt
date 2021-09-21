@@ -2,23 +2,21 @@ package com.example.jumbler
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.RelativeLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.*
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -32,40 +30,97 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        val activityView = findViewById<RelativeLayout>(R.id.userProfileView)
-        val deleteAccountButton = findViewById<Button>(R.id.buttonDeleteAccount)
-        val progressBar = findViewById<ProgressBar>(R.id.userProfileProgressBar)
-        val greetingTextView = findViewById<TextView>(R.id.welcome)
-        val emailTextView = findViewById<TextView>(R.id.textEmailAddress)
-        val reference = FirebaseDatabase.getInstance().getReference("Users")
-        val userID = (this.application as Jumbler).getCurrentUser()
+        val activityView: RelativeLayout = findViewById(R.id.settingsView)
+        val deleteAccountButton: Button = findViewById(R.id.buttonDeleteAccount)
+        val progressBar: ProgressBar = findViewById(R.id.userProfileProgressBar)
+        val userNameText: TextView = findViewById(R.id.settingsUserName)
+        val emailTextView: TextView = findViewById(R.id.textEmailAddress)
+        val reference: DatabaseReference = FirebaseDatabase.getInstance().getReference("Users")
+        val userID: String = (this.application as Jumbler).getCurrentUser()
 
-        if (userID != null) {
-            reference.child(userID).addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val userProfile = snapshot.getValue(User::class.java)
-                    if (userProfile != null) {
-                        runOnUiThread {
-                            greetingTextView.text =
-                                getString(R.string.welcome_user, userProfile.username)
-                            emailTextView?.text = userProfile.email
-                            progressBar.visibility = View.GONE
-                            activityView.visibility = View.VISIBLE
-                            deleteAccountButton.visibility = View.VISIBLE
-                        }
+        reference.child(userID).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val userProfile = snapshot.getValue(User::class.java)
+                if (userProfile != null) {
+                    runOnUiThread {
+                        userNameText.text =
+                            getString(R.string.welcome_user, userProfile.username)
+                        emailTextView.text = userProfile.email
+                        progressBar.visibility = View.GONE
+                        activityView.visibility = View.VISIBLE
+                        deleteAccountButton.visibility = View.VISIBLE
                     }
                 }
+            }
 
-                override fun onCancelled(error: DatabaseError) {
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
-                        getString(R.string.generic_error),
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                    progressBar.visibility = View.GONE
-                    activityView.visibility = View.VISIBLE
+            override fun onCancelled(error: DatabaseError) {
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    getString(R.string.generic_error),
+                    Snackbar.LENGTH_LONG
+                ).show()
+                progressBar.visibility = View.GONE
+                activityView.visibility = View.VISIBLE
+            }
+        })
+
+        val displayModeSpinner: Spinner = findViewById(R.id.displayModeSpinner)
+        val displayModePreferences = getSharedPreferences("displayMode", MODE_PRIVATE)
+        ArrayAdapter.createFromResource(
+            this,
+            R.array.display_modes,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            displayModeSpinner.adapter = adapter
+            val spinnerValue: Int = when {
+                displayModePreferences.getString("displayMode", "system") == "light" -> {
+                    1
                 }
-            })
+                displayModePreferences.getString("displayMode", "system") == "dark" -> {
+                    2
+                }
+                else -> {
+                    0
+                }
+            }
+            displayModeSpinner.setSelection(spinnerValue)
+        }
+        displayModeSpinner.onItemSelectedListener = object :
+            AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                when (displayModeSpinner.selectedItemPosition) {
+                    0 -> {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                        displayModePreferences.edit().putString("displayMode", "system").apply()
+                    }
+                    1 -> {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                        displayModePreferences.edit().putString("displayMode", "light").apply()
+                    }
+                    else -> {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                        displayModePreferences.edit().putString("displayMode", "dark").apply()
+                    }
+                }
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                when {
+                    displayModePreferences.getString("displayMode", "system") == "light" -> {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                        displayModeSpinner.setSelection(1)
+                    }
+                    displayModePreferences.getString("displayMode", "system") == "dark" -> {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                        displayModeSpinner.setSelection(2)
+                    }
+                    else -> {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                        displayModeSpinner.setSelection(0)
+                    }
+                }
+            }
         }
 
         val logout = findViewById<Button>(R.id.signOut)
@@ -83,22 +138,17 @@ class ProfileActivity : AppCompatActivity() {
                 }
                 .setNegativeButton(getString(R.string.delete_account)) { dialog, _ ->
                     coroutineDeleteStuff.launch(Default) {
-                        val userID =
-                            (this@ProfileActivity.application as Jumbler).getCurrentUser()
-                        val reference = FirebaseDatabase.getInstance().getReference("Users")
                         // Realtime
                         launch {
-                            if (userID != null) {
-                                reference.child(userID).removeValue()
-                            }
+                            reference.child(userID).removeValue()
                         }
                         // Auth
                         launch {
-                            val user = FirebaseAuth.getInstance().currentUser
+                            val user: FirebaseUser? = FirebaseAuth.getInstance().currentUser
                             // Get auth credentials from the user for re-authentication. The example below shows
                             // email and password credentials but there are multiple possible providers,
                             // such as GoogleAuthProvider or FacebookAuthProvider.
-                            val credential = EmailAuthProvider
+                            val credential: AuthCredential = EmailAuthProvider
                                 .getCredential("user@example.com", "password1234")
 
                             // Prompt the user to re-provide their sign-in credentials
@@ -114,8 +164,8 @@ class ProfileActivity : AppCompatActivity() {
                         }
                         // Firestore
                         launch {
-                            val db = FirebaseFirestore.getInstance()
-                            userID?.let { it1 ->
+                            val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+                            userID.let { it1 ->
                                 db.collection("Users").document(it1)
                                     .delete()
                                     .addOnSuccessListener {
@@ -133,44 +183,20 @@ class ProfileActivity : AppCompatActivity() {
                                     }
                             }
                         }
-                        val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
-                        val editor = preferences.edit()
-                        editor.putString("remember", "false")
-                        editor.apply()
-                        val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
-                        val editorEmail = preferencesEmail.edit()
-                        editorEmail.putString("email", null)
-                        editorEmail.apply()
-                        val preferencesPassword = getSharedPreferences("email", MODE_PRIVATE)
-                        val editorPassword = preferencesPassword.edit()
-                        editorPassword.putString("password", null)
-                        editorPassword.apply()
-                        FirebaseAuth.getInstance().signOut()
+                        clearUser()
                         dialog.dismiss()
                         finish()
                         startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
                     }
                 }
-            val alert = dialogBuilder.create()
+            val alert: AlertDialog = dialogBuilder.create()
             alert.show()
             alert.getButton(AlertDialog.BUTTON_NEGATIVE)
                 .setTextColor(ContextCompat.getColor(this@ProfileActivity, R.color.red))
         }
 
         logout?.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
-            val preferences = getSharedPreferences("checkbox", MODE_PRIVATE)
-            val editor = preferences.edit()
-            editor.putString("remember", "false")
-            editor.apply()
-            val preferencesEmail = getSharedPreferences("email", MODE_PRIVATE)
-            val editorEmail = preferencesEmail.edit()
-            editorEmail.putString("email", null)
-            editorEmail.apply()
-            val preferencesPassword = getSharedPreferences("email", MODE_PRIVATE)
-            val editorPassword = preferencesPassword.edit()
-            editorPassword.putString("password", null)
-            editorPassword.apply()
+            clearUser()
             finish()
             startActivity(Intent(this@ProfileActivity, MainActivity::class.java))
         }
@@ -179,5 +205,21 @@ class ProfileActivity : AppCompatActivity() {
             FirebaseAuth.getInstance().signOut()
             startActivity(Intent(this@ProfileActivity, MenuActivity::class.java))
         }
+    }
+
+    private fun clearUser() {
+        val preferences: SharedPreferences = getSharedPreferences("checkbox", MODE_PRIVATE)
+        val editor: SharedPreferences.Editor = preferences.edit()
+        editor.putString("remember", "false")
+        editor.apply()
+        val preferencesEmail: SharedPreferences = getSharedPreferences("email", MODE_PRIVATE)
+        val editorEmail: SharedPreferences.Editor = preferencesEmail.edit()
+        editorEmail.putString("email", null)
+        editorEmail.apply()
+        val preferencesPassword: SharedPreferences = getSharedPreferences("email", MODE_PRIVATE)
+        val editorPassword: SharedPreferences.Editor = preferencesPassword.edit()
+        editorPassword.putString("password", null)
+        editorPassword.apply()
+        FirebaseAuth.getInstance().signOut()
     }
 }

@@ -14,85 +14,77 @@ import com.example.jumbler.utils.Jumbler
 import com.example.jumbler.utils.LeaderboardAdapter
 import com.example.jumbler.utils.LeaderboardItem
 import com.google.android.material.tabs.TabLayout
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
 
 class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
-    private var leaderboardTab: TabLayout? = null
-    private var leaderboardIsEmpty: Boolean = false
-    private var emptyLeaderboardText: TextView? = null
-    private var leaderboardRecycler: RecyclerView? = null
-    private var globalLeaderboardRecycler: RecyclerView? = null
-    private var menu: Button? = null
-    private val scopeLeaderboard = CoroutineScope(CoroutineName("Leaderboard"))
-    private var progressbar: ProgressBar? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_personal_leaderboard)
 
-        menu = findViewById(R.id.buttonMenuLeaderboard)
-        leaderboardTab = findViewById(R.id.leaderboardTabs)
-        emptyLeaderboardText = findViewById(R.id.emptyLeaderboardText)
-        leaderboardRecycler = findViewById(R.id.leaderboardRecycler)
-        globalLeaderboardRecycler = findViewById(R.id.globalLeaderboardRecycler)
-        progressbar = findViewById(R.id.progressBarLeaderboard)
+        var leaderboardIsEmpty = false
+        val leaderboardTab: TabLayout = findViewById(R.id.leaderboardTabs)
+        val leaderboardRecycler: RecyclerView = findViewById(R.id.leaderboardRecycler)
+        val globalLeaderboardRecycler: RecyclerView = findViewById(R.id.globalLeaderboardRecycler)
+        val emptyLeaderboardText: TextView = findViewById(R.id.emptyLeaderboardText)
+        val menu: Button = findViewById(R.id.buttonMenuLeaderboard)
+        menu.setOnClickListener(this)
+        val progressBar: ProgressBar = findViewById(R.id.progressBarLeaderboard)
 
-        menu?.setOnClickListener(this)
-        leaderboardRecycler!!.visibility = View.INVISIBLE
-        globalLeaderboardRecycler!!.visibility = View.INVISIBLE
+        leaderboardRecycler.visibility = View.INVISIBLE
+        globalLeaderboardRecycler.visibility = View.INVISIBLE
 
+        val scopeLeaderboard = CoroutineScope(CoroutineName("Leaderboard"))
         scopeLeaderboard.launch(Dispatchers.Default) {
-            val userID =
+            val userID: String =
                 (this@PersonalLeaderboardActivity.application as Jumbler).getCurrentUser()
-            val db = FirebaseFirestore.getInstance()
-            val user = db.collection("Users")
-            val personalLeaderboard = launch {
+            val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+            val user: CollectionReference = db.collection("Users")
+            val personalLeaderboard: Job = launch {
                 var scores: MutableList<Int>?
-                if (userID != null) {
-                    user.document(userID).get().addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            val userSnapshot = task.result
-                            if (userSnapshot != null) {
-                                @Suppress("UNCHECKED_CAST")
-                                scores = userSnapshot["scores"] as MutableList<Int>?
-                                if (scores != null) {
-                                    scores?.sortDescending()
-                                    Log.e(TAG, "Personal Leaderboard $scores")
-                                    val personalRankings = ArrayList<LeaderboardItem>()
-                                    for (i in scores!!.indices) {
-                                        if (i < 10 && scores!![i] != 0) personalRankings.add(
-                                            LeaderboardItem(i + 1, scores!![i].toString())
-                                        )
-                                    }
+                user.document(userID).get().addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val userSnapshot = task.result
+                        if (userSnapshot != null) {
+                            scores = userSnapshot["scores"] as MutableList<Int>?
+                            if (scores != null) {
+                                scores?.sortDescending()
+                                Log.e(TAG, "Personal Leaderboard $scores")
+                                val personalRankings: ArrayList<LeaderboardItem> =
+                                    ArrayList<LeaderboardItem>()
+                                for (i in scores!!.indices) {
+                                    if (i < 10 && scores!![i] != 0) personalRankings.add(
+                                        LeaderboardItem(i + 1, scores!![i].toString())
+                                    )
+                                }
 
-                                    runOnUiThread {
-                                        if (personalRankings.isNotEmpty()) {
-                                            val adapter = LeaderboardAdapter()
-                                            adapter.setRankings(personalRankings)
-                                            leaderboardRecycler?.adapter = adapter
-                                            leaderboardRecycler?.layoutManager =
-                                                LinearLayoutManager(parent)
-                                        } else {
-                                            leaderboardIsEmpty = true
-                                            emptyLeaderboardText?.visibility = View.VISIBLE
-                                        }
-                                        progressbar!!.visibility = View.INVISIBLE
-                                    }
-                                } else {
-                                    runOnUiThread {
+                                runOnUiThread {
+                                    if (personalRankings.isNotEmpty()) {
+                                        val adapter = LeaderboardAdapter()
+                                        adapter.setRankings(personalRankings)
+                                        leaderboardRecycler.adapter = adapter
+                                        leaderboardRecycler.layoutManager =
+                                            LinearLayoutManager(parent)
+                                    } else {
                                         leaderboardIsEmpty = true
-                                        progressbar!!.visibility = View.INVISIBLE
-                                        emptyLeaderboardText?.visibility = View.VISIBLE
+                                        emptyLeaderboardText.visibility = View.VISIBLE
                                     }
+                                    progressBar.visibility = View.INVISIBLE
                                 }
                             } else {
-                                Log.d(TAG, "No such document")
+                                runOnUiThread {
+                                    leaderboardIsEmpty = true
+                                    progressBar.visibility = View.INVISIBLE
+                                    emptyLeaderboardText.visibility = View.VISIBLE
+                                }
                             }
                         } else {
-                            Log.d(TAG, "get failed with ", task.exception)
+                            Log.d(TAG, "No such document")
                         }
+                    } else {
+                        Log.d(TAG, "get failed with ", task.exception)
                     }
                 }
             }
@@ -107,7 +99,7 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                                 }
                             }
 
-                            val scores = mutableListOf<UserObject?>()
+                            val scores: MutableList<UserObject?> = mutableListOf()
                             for (documents in userSnapshot) {
                                 (documents.get("scores") as MutableList<Int>?)?.forEachIndexed { _, score ->
                                     if (score != 0) {
@@ -125,7 +117,8 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             }
                             Collections.sort(scores, CustomComparator())
                             Log.e(TAG, scores.toString())
-                            val globalRankings = ArrayList<LeaderboardItem>()
+                            val globalRankings: ArrayList<LeaderboardItem> =
+                                ArrayList<LeaderboardItem>()
                             (scores.forEachIndexed { index, scoreObj ->
                                 if (index < 10) globalRankings.add(
                                     LeaderboardItem(
@@ -138,8 +131,8 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                             runOnUiThread {
                                 val adapter = LeaderboardAdapter()
                                 adapter.setRankings(globalRankings)
-                                globalLeaderboardRecycler?.adapter = adapter
-                                globalLeaderboardRecycler?.layoutManager =
+                                globalLeaderboardRecycler.adapter = adapter
+                                globalLeaderboardRecycler.layoutManager =
                                     LinearLayoutManager(parent)
                             }
                         } else {
@@ -155,17 +148,17 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
                 delay(100L)
             }
             runOnUiThread {
-                leaderboardRecycler!!.visibility = View.VISIBLE
-                leaderboardTab!!.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                leaderboardRecycler.visibility = View.VISIBLE
+                leaderboardTab.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                     override fun onTabSelected(tab: TabLayout.Tab?) {
                         if (tab?.position == 0) {
-                            leaderboardRecycler!!.visibility = View.VISIBLE
-                            if (leaderboardIsEmpty) emptyLeaderboardText?.visibility = View.VISIBLE
-                            globalLeaderboardRecycler!!.visibility = View.INVISIBLE
+                            leaderboardRecycler.visibility = View.VISIBLE
+                            if (leaderboardIsEmpty) emptyLeaderboardText.visibility = View.VISIBLE
+                            globalLeaderboardRecycler.visibility = View.INVISIBLE
                         } else {
-                            leaderboardRecycler!!.visibility = View.INVISIBLE
-                            emptyLeaderboardText?.visibility = View.INVISIBLE
-                            globalLeaderboardRecycler!!.visibility = View.VISIBLE
+                            leaderboardRecycler.visibility = View.INVISIBLE
+                            emptyLeaderboardText.visibility = View.INVISIBLE
+                            globalLeaderboardRecycler.visibility = View.VISIBLE
                         }
                     }
 

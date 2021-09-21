@@ -10,7 +10,8 @@ import java.lang.StringBuilder
 import java.util.ArrayList
 
 class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.ViewHolder>() {
-    private var rankings = ArrayList<LeaderboardItem>()
+    private var rankings: ArrayList<LeaderboardItem> = ArrayList<LeaderboardItem>()
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int

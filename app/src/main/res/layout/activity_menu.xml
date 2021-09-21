@@ -57,6 +57,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/buttonLeaderboard"
         android:layout_centerHorizontal="true"
-        android:text="@string/account_settings_button"
+        android:text="@string/settings_button"
         android:textAllCaps="false" />
 </RelativeLayout>

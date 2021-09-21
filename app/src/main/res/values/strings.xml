@@ -2,6 +2,7 @@
     <string name="app_name">Jumbler</string>
     <string name="cancel">Cancel</string>
     <string name="loading">Loading…</string>
+    <string name="dictionary_error">Word dictionary currently unavailable. Please connect to the Internet and restart the app to continue.</string>
     <string name="generic_error">An error has occurred. Please try again.</string>
 
     <!-- Login -->
@@ -34,13 +35,13 @@
     <string name="start_game">Start Game</string>
     <string name="practice_game">Practice Game</string>
     <string name="leaderboard">Leaderboard</string>
-    <string name="account_settings_button">Account Settings</string>
+    <string name="settings_button">Settings</string>
 
     <!-- Game -->
     <string name="enter_word">Enter unscrambled word</string>
     <string name="correct_answer">Correct!</string>
     <string name="incorrect_answer">The word was "%1$s."</string>
-    <string name="game_over_text">You ran out of chances! The word was "%1$s."</string>
+    <string name="game_over_text">The word was "%1$s. Game over!"</string>
 
     <string name="score_placeholder">Score: 0</string>
     <string name="score">Score: %1$d</string>
@@ -51,6 +52,7 @@
     <string name="attempt_remaining">%1$d attempt remaining</string>
 
     <string name="skip_word">Skip Word</string>
+    <string name="hint">Hint</string>
     <string name="restart_keep_trying">Keep trying! You\'re not done yet.</string>
     <string name="restart_game">Restart Game</string>
     <string name="end_game">End Game</string>
@@ -60,9 +62,15 @@
     <string name="global_leaderboard">Global</string>
     <string name="leaderboard_empty">Start playing to record your scores!</string>
     
-    <!-- Account Settings -->
-    <string name="account_settings">Account Settings</string>
+    <!-- Settings -->
+    <string name="settings">Settings</string>
     <string name="welcome_user">Welcome, %1$s.</string>
+    <string name="appearance">Appearance: </string>
+    <string-array name="display_modes">
+        <item>Use system setting</item>
+        <item>Light mode</item>
+        <item>Dark mode</item>
+    </string-array>
     <string name="sign_out">Sign Out</string>
     <string name="delete_account">Delete Account</string>
     <string name="delete_account_warning">Are you sure you want to delete your account? All leaderboard scores will be permanently lost.</string>
@@ -75,5 +83,4 @@
     <string name="reset_password_empty_email">Please enter your email address to reset your password.</string>
     <string name="reset_password_check_email">Open the link sent to your email to reset your password.</string>
     <string name="reset_password_error">No accounts with this email address currently exist. Please check your input and try again.</string>
-    <string name="hint">Hint</string>
 </resources>

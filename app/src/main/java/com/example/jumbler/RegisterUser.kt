@@ -18,30 +18,21 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.concurrent.Executors
 
 class RegisterUser : AppCompatActivity(), View.OnClickListener {
-    private var dimBackground: LinearLayout? = null
-    private var registerUser: TextView? = null
-    private var editTUsername: EditText? = null
-    private var editTextEmail: EditText? = null
-    private var editTextPassword: EditText? = null
-    private var progressBar: ProgressBar? = null
-    private var mAuth: FirebaseAuth? = null
+    private var mAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_user)
-        mAuth = FirebaseAuth.getInstance()
-        registerUser = findViewById(R.id.buttonRegisterUser)
-        registerUser?.setOnClickListener(this)
-        editTUsername = findViewById(R.id.textUsername)
-        editTextEmail = findViewById(R.id.textEmail)
-        editTextPassword = findViewById(R.id.textPassword)
-        progressBar = findViewById(R.id.progressBar)
+        val registerUser: TextView = findViewById(R.id.buttonRegisterUser)
+        registerUser.setOnClickListener(this)
     }
 
     override fun onClick(v: View) {
@@ -52,44 +43,54 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
 
     private fun registerUser() {
         var finished = false
-        val email = editTextEmail!!.text.toString().trim { it <= ' ' }
-        val username = editTUsername!!.text.toString().trim { it <= ' ' }
-        val password = editTextPassword!!.text.toString().trim { it <= ' ' }
+        val editTextEmail: EditText = findViewById(R.id.textEmail)
+        val email = editTextEmail.text.toString().trim { it <= ' ' }
+        val editTextUserName: EditText = findViewById(R.id.textUsername)
+        val username = editTextUserName.text.toString().trim { it <= ' ' }
+        val editTextPassword: EditText = findViewById(R.id.textPassword)
+        val password = editTextPassword.text.toString().trim { it <= ' ' }
+
         if (email.isEmpty()) {
-            editTextEmail!!.error = getString(R.string.empty_email)
-            editTextEmail!!.requestFocus()
+            editTextEmail.error = getString(R.string.empty_email)
+            editTextEmail.requestFocus()
             return
         }
+
         if (username.isEmpty()) {
-            editTUsername!!.error = getString(R.string.empty_username)
-            editTUsername!!.requestFocus()
+            editTextUserName.error = getString(R.string.empty_username)
+            editTextUserName.requestFocus()
             return
         }
+
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            editTextEmail!!.error = getString(R.string.invalid_email)
-            editTextEmail!!.requestFocus()
+            editTextEmail.error = getString(R.string.invalid_email)
+            editTextEmail.requestFocus()
             return
         }
+
         if (password.isEmpty()) {
-            editTextPassword!!.error = getString(R.string.empty_password)
-            editTextPassword!!.requestFocus()
+            editTextPassword.error = getString(R.string.empty_password)
+            editTextPassword.requestFocus()
             return
         }
+
         if (password.length < 6) {
-            editTextPassword!!.error = getString(R.string.invalid_password)
-            editTextPassword!!.requestFocus()
+            editTextPassword.error = getString(R.string.invalid_password)
+            editTextPassword.requestFocus()
             return
         }
-        val db = FirebaseFirestore.getInstance()
-        val user = db.collection("Users")
+
+        val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+        val user: CollectionReference = db.collection("Users")
         val getUser = CoroutineScope(CoroutineName("getUser"))
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e("RegisterUser", "in user information")
-            val job1 = launch {
+            val job1: Job = launch {
                 user.get().addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val userSnapShot = task.result
                         var isUnique = true
+
                         if (userSnapShot != null) {
                             for (i in userSnapShot) {
                                 if (i.get("username") as String == username) {
@@ -101,17 +102,21 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
                                 }
                             }
                         }
+
                         if (isUnique) {
+                            val dimBackground: LinearLayout = findViewById(R.id.dimBackground)
+                            val progressBar: ProgressBar = findViewById(R.id.progressBar)
+
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 findViewById<View>(R.id.createUserActivity).setRenderEffect(
                                     RenderEffect.createBlurEffect(16F, 16F, Shader.TileMode.MIRROR)
                                 )
                             } else {
-                                dimBackground = findViewById(R.id.dimBackground)
-                                dimBackground!!.visibility = View.VISIBLE
+                                dimBackground.visibility = View.VISIBLE
                             }
-                            progressBar!!.visibility = View.VISIBLE
-                            mAuth!!.createUserWithEmailAndPassword(email, password)
+                            progressBar.visibility = View.VISIBLE
+
+                            mAuth.createUserWithEmailAndPassword(email, password)
                                 .addOnCompleteListener { task1 ->
                                     if (task1.isSuccessful) {
                                         println("$username $email")
@@ -120,27 +125,39 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
                                             .child(FirebaseAuth.getInstance().currentUser!!.uid)
                                             .setValue(localUser).addOnCompleteListener { task ->
                                                 if (task.isSuccessful) {
-                                                    val firebaseUser =
+                                                    val firebaseUser: FirebaseUser? =
                                                         FirebaseAuth.getInstance().currentUser
-                                                    val userID = firebaseUser!!.uid
-                                                    localUser.addUuid(userID)
-                                                    firebaseUser.sendEmailVerification()
-                                                    Snackbar.make(
-                                                        findViewById(android.R.id.content),
-                                                        getString(R.string.new_account_success),
-                                                        Snackbar.LENGTH_LONG
-                                                    ).show()
+                                                    val userID: String? = firebaseUser?.uid
 
-                                                    Handler(Looper.getMainLooper()).postDelayed({
-                                                        startActivity(
-                                                            Intent(
-                                                                this@RegisterUser,
-                                                                MainActivity::class.java
-                                                            )
+                                                    if (userID != null) {
+                                                        localUser.addUuid(userID)
+                                                        firebaseUser.sendEmailVerification()
+                                                        Snackbar.make(
+                                                            findViewById(android.R.id.content),
+                                                            getString(R.string.new_account_success),
+                                                            Snackbar.LENGTH_LONG
+                                                        ).show()
+
+                                                        Handler(Looper.getMainLooper()).postDelayed(
+                                                            {
+                                                                startActivity(
+                                                                    Intent(
+                                                                        this@RegisterUser,
+                                                                        MainActivity::class.java
+                                                                    )
+                                                                )
+                                                            },
+                                                            2750
                                                         )
-                                                    }, 2750)
-
-                                                    finished = true
+                                                        finished = true
+                                                    } else {
+                                                        Snackbar.make(
+                                                            findViewById(android.R.id.content),
+                                                            getString(R.string.new_account_fail),
+                                                            Snackbar.LENGTH_LONG
+                                                        ).show()
+                                                        finished = true
+                                                    }
                                                 } else {
                                                     Snackbar.make(
                                                         findViewById(android.R.id.content),
@@ -149,14 +166,15 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
                                                     ).show()
                                                     finished = true
                                                 }
+
                                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                                     findViewById<View>(R.id.createUserActivity).setRenderEffect(
                                                         null
                                                     )
                                                 } else {
-                                                    dimBackground!!.visibility = View.GONE
+                                                    dimBackground.visibility = View.GONE
                                                 }
-                                                progressBar!!.visibility = View.GONE
+                                                progressBar.visibility = View.GONE
                                             }
                                     } else {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -164,9 +182,9 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
                                                 null
                                             )
                                         } else {
-                                            dimBackground!!.visibility = View.GONE
+                                            dimBackground.visibility = View.GONE
                                         }
-                                        progressBar!!.visibility = View.GONE
+                                        progressBar.visibility = View.GONE
                                         finished = true
                                     }
                                 }.addOnFailureListener { exception ->

@@ -1,18 +1,21 @@
 package com.example.jumbler
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.protobuf.LazyStringArrayList
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
@@ -21,64 +24,59 @@ import java.util.Collections.max
 import java.util.concurrent.Executors
 
 open class GameActivity : AppCompatActivity(), View.OnClickListener {
-    private var word = ""
-    private var randomWordScrambled = ""
-    private var correct = 0
-    private var chances = 3
-    private var waitLength = 20
-    private var seconds = waitLength
-    private val scopeTimer = CoroutineScope(CoroutineName("Timer"))
-    private val getUser = CoroutineScope(CoroutineName("getUser"))
-    private var menu: Button? = null
-    private var correctWords: TextView? = null
-    private var scrambledWord: TextView? = null
-    private var enterScramble: EditText? = null
-    private var textViewChances: TextView? = null
-    private var buttonRestart: Button? = null
-    private var textViewFlash: TextView? = null
-    private var timerText: TextView? = null
-    private var textViewHighScore: TextView? = null
-    private var lastWord = ""
-    private var highscore = 0
+    private var word: String = ""
+    private var lastWord: String = ""
+    private var randomWordScrambled: String = ""
+    private var correct: Int = 0
+    private var highScore: Int = 0
+    private var chances: Int = 3
+    private var waitLength: Int = 20
+    private var seconds: Int = waitLength
+    private var wordListLength: Array<Array<String>> = arrayOf()
+    private val timerText: TextView by lazy { findViewById(R.id.gameTimer) }
+    private val playerScore: TextView by lazy { findViewById(R.id.gameScore) }
+    private val gameHighScore: TextView by lazy { findViewById(R.id.gameHighScore) }
+    private val scrambledWord: TextView by lazy { findViewById(R.id.gameScrambledWord) }
+    private val textField: EditText by lazy { findViewById(R.id.gameEditText) }
+    private val gameWordSolution: TextView by lazy { findViewById(R.id.gameWordSolution) }
+    private val gameRemainingChances: TextView by lazy { findViewById(R.id.gameRemainingChances) }
+    private val imm: InputMethodManager by lazy { getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager }
+    private val userID: String by lazy { (this@GameActivity.application as Jumbler).getCurrentUser() }
+    private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
+    private val scopeTimer: CoroutineScope = CoroutineScope(CoroutineName("Timer"))
+    private val getUser: CoroutineScope = CoroutineScope(CoroutineName("getUser"))
     private val user1: MutableMap<String, Any?> = HashMap()
-    private var apiKey: String? = null
-    private var wordListLength = arrayOf<Array<String>>()
-    private var wordsArray = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
-        menu = findViewById(R.id.buttonMenu)
-        menu?.setOnClickListener(this)
-        correctWords = findViewById(R.id.textViewCorrect)
-        scrambledWord = findViewById(R.id.textWord)
-        enterScramble = findViewById(R.id.textEditWord)
-        textViewChances = findViewById(R.id.textViewChances)
-        buttonRestart = findViewById(R.id.buttonRestart)
-        textViewFlash = findViewById(R.id.textViewFlash)
-        timerText = findViewById(R.id.textViewTimer)
-        textViewHighScore = findViewById(R.id.textViewHighScore)
-        apiKey = getString(R.string.parse_application_id)
+        val menu: Button = findViewById(R.id.buttonMenu)
+        menu.setOnClickListener(this)
+        val buttonRestart: Button = findViewById(R.id.buttonRestart)
+
         runOnUiThread {
-            timerText!!.visibility = View.INVISIBLE
-            correctWords!!.text = getString(R.string.score, correct)
-            if (chances != 1) textViewChances!!.text =
+            timerText.visibility = View.INVISIBLE
+            textField.requestFocus()
+            imm.showSoftInput(textField, InputMethodManager.SHOW_IMPLICIT)
+            playerScore.text = getString(R.string.score, correct)
+            if (chances != 1) gameRemainingChances.text =
                 getString(R.string.attempts_remaining, chances)
-            if (chances == 1) textViewChances!!.text =
+            if (chances == 1) gameRemainingChances.text =
                 getString(R.string.attempt_remaining, chances)
         }
-        val path = filesDir
-        val letDirectory = File(path, "wordsData")
 
-        for(i in 2..12){
+        val letDirectory = File(filesDir, "wordsData")
+        for (i in 2..12) {
             val file = File(letDirectory, "words$i.txt")
-            val inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
+            val inputAsString: String = FileInputStream(file).bufferedReader().use { it.readText() }
             wordListLength += (inputAsString.split(" ") as MutableList<String>).toTypedArray()
         }
+
         Log.e(TAG, "starting scramble from creation")
         startGame()
+
         // RESTART BUTTON
-        buttonRestart?.setOnClickListener {
+        buttonRestart.setOnClickListener {
             if (chances > 0) {
                 Snackbar.make(
                     findViewById(android.R.id.content),
@@ -91,15 +89,15 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 correct = 0
                 seconds = waitLength
                 runOnUiThread {
-                    correctWords!!.text = getString(R.string.score, correct)
-                    if (chances != 1) textViewChances!!.text =
+                    playerScore.text = getString(R.string.score, correct)
+                    if (chances != 1) gameRemainingChances.text =
                         getString(R.string.attempts_remaining, chances)
-                    if (chances == 1) textViewChances!!.text =
+                    if (chances == 1) gameRemainingChances.text =
                         getString(R.string.attempt_remaining, chances)
-                    enterScramble!!.setText("")
-                    enterScramble!!.visibility = View.VISIBLE
-                    textViewFlash!!.visibility = View.INVISIBLE
-                    textViewHighScore!!.visibility = View.INVISIBLE
+                    textField.setText("")
+                    textField.visibility = View.VISIBLE
+                    gameWordSolution.visibility = View.INVISIBLE
+                    gameHighScore.visibility = View.INVISIBLE
                 }
                 Log.e(TAG, "starting scramble from RESTART")
                 startGame()
@@ -109,24 +107,24 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun correctProcedure() {
         correct++
-        Log.e(TAG, "correct procedure $highscore : $correct")
-        if (highscore + 1 == correct) {
-            Log.e(TAG, "showing highscore")
-            val newHighscore = CoroutineScope(CoroutineName("newHighscore"))
-            newHighscore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                val job1 = launch {
+        Log.e(TAG, "correct procedure $highScore : $correct")
+        if (highScore + 1 == correct) {
+            Log.e(TAG, "showing highScore")
+            val newHighScore = CoroutineScope(CoroutineName("newHighScore"))
+            newHighScore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                val job1: Job = launch {
                     runOnUiThread {
-                        textViewHighScore!!.visibility = View.VISIBLE
+                        gameHighScore.visibility = View.VISIBLE
                     }
                 }
                 job1.join()
             }
         }
         runOnUiThread {
-            enterScramble!!.text.clear()
-            correctWords!!.text = getString(R.string.score, correct)
-            textViewFlash!!.text = getString(R.string.correct_answer)
-            textViewFlash!!.visibility = View.VISIBLE
+            textField.text.clear()
+            playerScore.text = getString(R.string.score, correct)
+            gameWordSolution.text = getString(R.string.correct_answer)
+            gameWordSolution.visibility = View.VISIBLE
         }
         Log.e(TAG, "starting scramble from getting it right")
         startGame()
@@ -139,34 +137,41 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun randomNumber(low: Int, high: Int): Int {
-        val r = Random()
-        return r.nextInt(high - low) + low
+        return Random().nextInt(high - low) + low
     }
-    private fun generateWord(first :Int, second : Int, third : Int){
-        val randomNum = randomNumber(1, 3)
-        if(randomNum == 1) {
-            val randomNum1 = randomNumber(0, wordListLength[first].size)
-            word = wordListLength[first][randomNum1]
-        } else if (randomNum == 2){
-            val randomNum1 = randomNumber(0, wordListLength[second].size)
-            word = wordListLength[second][randomNum1]
-        } else if (randomNum == 3){
-            val randomNum1 = randomNumber(0, wordListLength[third].size)
-            word = wordListLength[third][randomNum1]
+
+    private fun generateWord(first: Int, second: Int, third: Int) {
+        when (randomNumber(1, 3)) {
+            1 -> {
+                val randomNum1 = randomNumber(0, wordListLength[first].size)
+                word = wordListLength[first][randomNum1]
+            }
+            2 -> {
+                val randomNum1 = randomNumber(0, wordListLength[second].size)
+                word = wordListLength[second][randomNum1]
+            }
+            3 -> {
+                val randomNum1 = randomNumber(0, wordListLength[third].size)
+                word = wordListLength[third][randomNum1]
+            }
         }
     }
+
     private fun startGame() {
         var correctWord = ""
         Log.e(TAG, "StartGame")
         runOnUiThread {
-            timerText!!.visibility = View.VISIBLE
+            textField.text.clear()
+            timerText.visibility = View.VISIBLE
+            textField.requestFocus()
+            imm.showSoftInput(textField, InputMethodManager.SHOW_IMPLICIT)
         }
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             delay(1000L)
-            val guess = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            val guess: Job = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 // Wait for UI to actually change on screen.
                 while (seconds >= 0) {
-                    runOnUiThread { timerText!!.text = seconds.toString() }
+                    runOnUiThread { timerText.text = seconds.toString() }
                     Log.e(TAG, "Seconds = $seconds")
                     delay(1000L)
                     seconds--
@@ -174,63 +179,73 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
             launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 lastWord = word
-                if(correct in 0..5){
-                    generateWord(1,1,2)
+                if (correct in 0..5) {
+                    generateWord(1, 1, 2)
                 }
-                if(correct in 6..10){
-                    val newRandomNum = randomNumber(1, 10)
-                    if(newRandomNum in 1..3) {
-                        generateWord(2,2,3)
+                if (correct in 6..10) {
+                    val newRandomNum: Int = randomNumber(1, 10)
+                    if (newRandomNum in 1..3) {
+                        generateWord(2, 2, 3)
                     } else {
-                        generateWord(3,4,5)
-                    }
-                }
-                if(correct in 11..15){
-                    val newRandomNum = randomNumber(1, 10)
-                    if(newRandomNum in 1..2) {
-                        generateWord(2,3,3)
-                    } else if(newRandomNum in 3..4) {
-                        generateWord(4,4,5)
-                    } else{
-                        generateWord(6,8,8)
-                    }
-                }
-                if(correct in 16..20) {
-                    waitLength = 15
-                    val newRandomNum = randomNumber(1, 20)
-                    if (newRandomNum in 1..2) {
-                        generateWord(3,3,4)
-                    } else if (newRandomNum in 3..4) {
                         generateWord(3, 4, 5)
-                    } else if (newRandomNum in 5..10) {
-                        generateWord(6, 7, 8)
-                    } else {
-                        generateWord(9, 10, 11)
                     }
                 }
-                if(correct > 20){
+                if (correct in 11..15) {
+                    when (randomNumber(1, 10)) {
+                        in 1..2 -> {
+                            generateWord(2, 3, 3)
+                        }
+                        in 3..4 -> {
+                            generateWord(4, 4, 5)
+                        }
+                        else -> {
+                            generateWord(6, 8, 8)
+                        }
+                    }
+                }
+                if (correct in 16..20) {
                     waitLength = 15
-                    val newRandomNum = randomNumber(1, 30)
-                    if (newRandomNum in 1..2) {
-                        generateWord(5,5,5)
-                    } else if (newRandomNum in 3..10) {
-                        generateWord(6, 6, 7)
-                    } else if (newRandomNum in 11..20) {
-                        generateWord(7, 7, 8)
-                    } else {
-                        generateWord(9, 10, 11)
+                    when (randomNumber(1, 20)) {
+                        in 1..2 -> {
+                            generateWord(3, 3, 4)
+                        }
+                        in 3..4 -> {
+                            generateWord(3, 4, 5)
+                        }
+                        in 5..10 -> {
+                            generateWord(6, 7, 8)
+                        }
+                        else -> {
+                            generateWord(9, 10, 11)
+                        }
+                    }
+                }
+                if (correct > 20) {
+                    waitLength = 15
+                    when (randomNumber(1, 30)) {
+                        in 1..2 -> {
+                            generateWord(5, 5, 5)
+                        }
+                        in 3..10 -> {
+                            generateWord(6, 6, 7)
+                        }
+                        in 11..20 -> {
+                            generateWord(7, 7, 8)
+                        }
+                        else -> {
+                            generateWord(9, 10, 11)
+                        }
                     }
                 }
                 Log.e(TAG, word)
                 randomWordScrambled = word
-                while(randomWordScrambled == word) {
-                    val random = Random()
-                    Log.e(TAG, "Resetting randomwordscramble")
+                while (randomWordScrambled == word) {
+                    Log.e(TAG, "Resetting randomWordScrambled")
                     val a: CharArray = word.toCharArray()
                     for (i in a.indices) {
-                        val j: Int = random.nextInt(a.size)
+                        val j: Int = Random().nextInt(a.size)
                         // Swap letters
-                        val temp = a[i]
+                        val temp: Char = a[i]
                         a[i] = a[j]
                         a[j] = temp
                     }
@@ -241,35 +256,36 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 seconds = waitLength
                 // Display timer and set random word
                 runOnUiThread {
-                    scrambledWord!!.text = randomWordScrambled
-                    textViewFlash!!.visibility = View.INVISIBLE
-                    timerText!!.visibility = View.VISIBLE
+                    scrambledWord.text = randomWordScrambled
+                    gameWordSolution.visibility = View.INVISIBLE
+                    timerText.visibility = View.VISIBLE
                 }
             }
             var correctBool = false
             var lastGuess = ""
             while (!guess.isCompleted) {
-                if(seconds == 0){
+                if (seconds == 0) {
                     word = ""
                 }
-                    if (enterScramble!!.text.toString().trim().length == word.length) {
-                        if (sameChars(
-                                enterScramble!!.text.toString().trim().lowercase(),
-                                word.lowercase()
-                            )
+                if (textField.text.toString().trim().length == word.length) {
+                    if (sameChars(
+                            textField.text.toString().trim().lowercase(),
+                            word.lowercase()
+                        )
+                    ) {
+                        if (textField.text.toString().lowercase().trim()
+                                .contentEquals(word.lowercase())
+                            && word != ""
                         ) {
-                            if (enterScramble!!.text.toString().lowercase().trim()
-                                    .contentEquals(word.lowercase())
-                                && word != ""
-                            ) {
-                                Log.e(TAG, "Correct")
-                                correctBool = true
-                            }
-                            if (lastGuess != enterScramble!!.text.toString()) {
-                                lastGuess = enterScramble!!.text.toString()
-                                if (!correctBool) {
-                                val queue = Volley.newRequestQueue(this@GameActivity)
-                                val enteredWord = enterScramble!!.text.toString().trim()
+                            Log.e(TAG, "Correct")
+                            correctBool = true
+                        }
+                        if (lastGuess != textField.text.toString()) {
+                            lastGuess = textField.text.toString()
+                            if (!correctBool) {
+                                val queue: RequestQueue = Volley.newRequestQueue(this@GameActivity)
+                                val enteredWord: String = textField.text.toString().trim()
+                                val apiKey: String = getString(R.string.parse_application_id)
                                 val url =
                                     "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
                                 val stringRequest = StringRequest(Request.Method.GET, url,
@@ -289,9 +305,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                             }
                         }
                     }
-                    if (correctBool) {
-                        break
-                    }
+                    if (correctBool) break
                 }
                 delay(500L)
             }
@@ -307,27 +321,27 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
                 !correctBool && chances == 1 -> {
                     chances--
                     runOnUiThread {
-                        textViewFlash!!.text = getString(R.string.game_over_text, correctWord)
-                        textViewFlash!!.visibility = View.VISIBLE
-                        textViewChances!!.text = getString(R.string.attempts_remaining, chances)
-                        enterScramble!!.visibility = View.INVISIBLE
+                        gameWordSolution.text = getString(R.string.game_over_text, correctWord)
+                        gameWordSolution.visibility = View.VISIBLE
+                        gameRemainingChances.text = getString(R.string.attempts_remaining, chances)
+                        textField.visibility = View.INVISIBLE
                     }
                     addToDatabase()
                 }
                 // If they got it wrong, subtract chances and restart
                 !correctBool -> {
                     runOnUiThread {
-                        enterScramble!!.text.clear()
-                        textViewFlash!!.text = getString(R.string.incorrect_answer, correctWord)
-                        textViewFlash!!.visibility = View.VISIBLE
+                        textField.text.clear()
+                        gameWordSolution.text = getString(R.string.incorrect_answer, correctWord)
+                        gameWordSolution.visibility = View.VISIBLE
                     }
                     Log.e(TAG, "Got wrong")
                     guess.cancelAndJoin()
                     chances--
                     runOnUiThread {
-                        if (chances != 1) textViewChances!!.text =
+                        if (chances != 1) gameRemainingChances.text =
                             getString(R.string.attempts_remaining, chances)
-                        if (chances == 1) textViewChances!!.text =
+                        if (chances == 1) gameRemainingChances.text =
                             getString(R.string.attempt_remaining, chances)
                     }
                     delay(1000L)
@@ -340,8 +354,8 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun sameChars(firstStr: String, secondStr: String): Boolean {
-        val first = firstStr.toCharArray()
-        val second = secondStr.toCharArray()
+        val first: CharArray = firstStr.toCharArray()
+        val second: CharArray = secondStr.toCharArray()
         Arrays.sort(first)
         Arrays.sort(second)
         return first.contentEquals(second)
@@ -370,32 +384,28 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun getUserInformation() {
-        val userID = (this@GameActivity.application as Jumbler).getCurrentUser()
-        val db = FirebaseFirestore.getInstance()
-        val user = db.collection("Users")
+        val user: CollectionReference = db.collection("Users")
         var username: String
         var newScores: MutableList<Int>
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e(TAG, "in user information")
-            val job1 = launch {
-                if (userID != null) {
-                    user.document(userID).get().addOnSuccessListener { document ->
-                        if (document != null) {
-                            username = document["username"] as String
-                            val scores = document["scores"]
-                            if (scores != null) {
-                                Log.e(TAG, "Setting user information")
-                                newScores = (scores as MutableList<Int>?)!!
-                                user1["username"] = username
-                                user1["scores"] = newScores
-                                Log.e(TAG, "trying for multiple scores")
-                            }
-                        } else {
-                            Log.d(TAG, "No such document")
+            val job1: Job = launch {
+                user.document(userID).get().addOnSuccessListener { document ->
+                    if (document != null) {
+                        username = document["username"] as String
+                        val scores = document["scores"]
+                        if (scores != null) {
+                            Log.e(TAG, "Setting user information")
+                            newScores = (scores as MutableList<Int>?)!!
+                            user1["username"] = username
+                            user1["scores"] = newScores
+                            Log.e(TAG, "trying for multiple scores")
                         }
-                    }.addOnFailureListener { exception ->
-                        Log.d(TAG, "get failed with ", exception)
+                    } else {
+                        Log.d(TAG, "No such document")
                     }
+                }.addOnFailureListener { exception ->
+                    Log.d(TAG, "get failed with ", exception)
                 }
             }
             while (!job1.isCompleted && user1.isEmpty()) {
@@ -417,19 +427,19 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             }
 
             val scores = user1["scores"]
-            Log.e(TAG, "in get user highscore $scores")
+            Log.e(TAG, "in get user highScore $scores")
             if (scores == 0) {
-                highscore = -2
+                highScore = -2
             } else if (scores is List<*>) {
                 try {
                     val listScores: MutableList<Int> = scores as MutableList<Int>
-                    highscore = max(listScores)
+                    highScore = max(listScores)
                 } catch (e: ClassCastException) {
                     val listScores: MutableList<Long> = scores as MutableList<Long>
                     // Using max() produces a fatal casting error
                     var highestScore = 0
                     for (score in listScores) if (score > highestScore) highestScore = score.toInt()
-                    highscore = highestScore
+                    highScore = highestScore
                 }
             }
         }
@@ -437,9 +447,6 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun addToDatabase() {
         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
-        val userID = (this@GameActivity.application as Jumbler).getCurrentUser()
-        val db = FirebaseFirestore.getInstance()
-
         scopeFirebaseAdd.launch(Dispatchers.Default) {
             val job1 = launch {
                 getUserInformation()
@@ -447,7 +454,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             while (!job1.isCompleted) {
                 delay(1000L)
             }
-            if (user1["username"] != null && userID != null && correct != 0) {
+            if (user1["username"] != null && correct != 0) {
                 val scores = user1["scores"] as MutableList<Int>
                 scores.add(correct)
                 user1["scores"] = scores

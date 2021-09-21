@@ -4,30 +4,40 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/textViewTimer"
+        android:id="@+id/gameTimer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:text="@string/loading"
         android:textSize="20sp" />
 
     <TextView
-        android:id="@+id/textViewCorrect"
+        android:id="@+id/gameWordSolution"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="10dp"
+        android:textAlignment="center"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/gameScore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
         android:text="@string/score_placeholder"
         android:textSize="20sp" />
 
     <TextView
-        android:id="@+id/textViewHighScore"
+        android:id="@+id/gameHighScore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textViewCorrect"
+        android:layout_below="@id/gameScore"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="20dp"
         android:text="@string/high_score"
@@ -35,43 +45,34 @@
         android:visibility="invisible" />
 
     <TextView
-        android:id="@+id/textWord"
+        android:id="@+id/gameScrambledWord"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textViewHighScore"
+        android:layout_below="@id/gameHighScore"
         android:layout_centerHorizontal="true"
+        android:text="@string/loading"
         android:textSize="34sp" />
 
     <EditText
-        android:id="@+id/textEditWord"
+        android:id="@+id/gameEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textWord"
+        android:layout_below="@id/gameScrambledWord"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
         android:ems="10"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:hint="@string/enter_word"
         android:imeOptions="flagNoExtractUi"
         android:importantForAutofill="no"
         android:inputType="text" />
 
     <TextView
-        android:id="@+id/textViewFlash"
+        android:id="@+id/gameRemainingChances"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textEditWord"
-        android:layout_centerHorizontal="true"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="20dp"
-        android:text="@string/loading"
-        android:textAlignment="center"
-        android:textSize="20sp" />
-
-    <TextView
-        android:id="@+id/textViewChances"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/textViewFlash"
+        android:layout_below="@id/gameEditText"
         android:layout_centerHorizontal="true"
         android:layout_marginStart="20sp"
         android:layout_marginTop="20dp"
