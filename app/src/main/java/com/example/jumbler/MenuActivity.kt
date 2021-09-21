@@ -21,7 +21,7 @@ class MenuActivity : AppCompatActivity() {
         val practice: Button = findViewById(R.id.buttonPractice)
         Log.e("|TAG", filesDir.toString())
         val letDirectory = File(filesDir, "wordsData")
-        val file = File(letDirectory, "words.txt")
+        val file = File(letDirectory, "words3.txt")
         val inputAsString: String = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
         } catch (e: FileNotFoundException) {
@@ -32,7 +32,6 @@ class MenuActivity : AppCompatActivity() {
             if (inputAsString != "") {
                 startActivity(Intent(this@MenuActivity, GameActivity::class.java))
             } else {
-                // TODO: Update all words text file to search for an the other file ?? what
                 Snackbar.make(
                     findViewById(android.R.id.content),
                     getString(R.string.dictionary_error),

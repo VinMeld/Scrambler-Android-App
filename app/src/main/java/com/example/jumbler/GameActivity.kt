@@ -360,7 +360,10 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         Arrays.sort(second)
         return first.contentEquals(second)
     }
-
+    override fun onSaveInstanceState(data: Bundle) {
+        super.onSaveInstanceState(data)
+        data.putInt("param", seconds)
+    }
     override fun onPause() {
         Log.e(TAG, "in pause()")
         if (chances != 0) {

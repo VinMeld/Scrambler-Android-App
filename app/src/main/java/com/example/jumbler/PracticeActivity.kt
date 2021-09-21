@@ -46,7 +46,6 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
             val inputAsString: String = FileInputStream(file).bufferedReader().use { it.readText() }
             wordListLength += (inputAsString.split(" ") as MutableList<String>).toTypedArray()
         }
-
         runOnUiThread {
             playerScore.text = correct.toString()
             textField.requestFocus()
