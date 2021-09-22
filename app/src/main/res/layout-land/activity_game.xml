@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/gameHighScore"
         android:layout_centerHorizontal="true"
-        android:text="@string/loading"
+        android:text="@string/press_begin"
         android:textSize="34sp" />
 
     <EditText
@@ -78,7 +78,17 @@
         android:layout_marginTop="20dp"
         android:text="@string/attempts_placeholder"
         android:textSize="20sp" />
-
+    <Button
+        android:id="@+id/playGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/gameRemainingChances"
+        android:layout_centerHorizontal="true"
+        android:soundEffectsEnabled="false"
+        android:layout_marginTop="20dp"
+        android:text="@string/begin"
+        android:textAllCaps="false"
+        />
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

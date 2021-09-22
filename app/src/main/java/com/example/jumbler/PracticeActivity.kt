@@ -31,6 +31,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     private val textField: EditText by lazy { findViewById(R.id.practiceEditText) }
     private val imm: InputMethodManager by lazy { getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager }
     private val scopeTimer: CoroutineScope = CoroutineScope(CoroutineName("Timer"))
+    private var randomWordScrambled: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +52,10 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
             textField.requestFocus()
             imm.showSoftInput(textField, InputMethodManager.SHOW_IMPLICIT)
         }
-        startGame()
+        if(word == "") {
+            Log.e(TAG, "calling from word ==")
+            startGame()
+        }
         checkScrambler()
 
         buttonRestart.setOnClickListener {
@@ -61,35 +65,41 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                 textField.text.clear()
                 playerScore.text = getString(R.string.score, correct)
             }
+            Log.e(TAG, "calling from restart")
             startGame()
         }
 
         buttonHint.setOnClickListener {
-            val scopeTimer = CoroutineScope(CoroutineName("Timer"))
-            scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                if (word.length == hintNumber + 1) {
-                    hintNumber++
-                    val wordSolution: TextView = findViewById(R.id.practiceWordSolution)
-                    val hintWord: String = word.substring(0, hintNumber)
-                    runOnUiThread {
-                        Log.e(TAG, "setting hint full")
-                        wordHint.text = hintWord
-                        wordSolution.text = getString(R.string.incorrect_answer, hintWord)
-                    }
-                    hintNumber = 0
-                    delay(1500L)
-                    runOnUiThread {
-                        textField.text.clear()
-                        wordHint.text = ""
-                        wordSolution.text = ""
-                    }
-                    startGame()
-                } else {
-                    hintNumber++
-                    val hintWord = word.substring(0, hintNumber)
-                    runOnUiThread {
-                        wordHint.text = hintWord
-                    }
+            hintProcedure()
+        }
+    }
+
+    private fun hintProcedure() {
+        val scopeTimer = CoroutineScope(CoroutineName("Timer"))
+        scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+            if (word.length == hintNumber + 1) {
+                hintNumber++
+                val wordSolution: TextView = findViewById(R.id.practiceWordSolution)
+                val hintWord: String = word.substring(0, hintNumber)
+                runOnUiThread {
+                    Log.e(TAG, "setting hint full")
+                    wordHint.text = hintWord
+                    wordSolution.text = getString(R.string.incorrect_answer, hintWord)
+                }
+                hintNumber = 0
+                delay(1500L)
+                runOnUiThread {
+                    textField.text.clear()
+                    wordHint.text = ""
+                    wordSolution.text = ""
+                }
+                Log.e(TAG, "calling from hint")
+                startGame()
+            } else {
+                hintNumber++
+                val hintWord = word.substring(0, hintNumber)
+                runOnUiThread {
+                    wordHint.text = hintWord
                 }
             }
         }
@@ -148,6 +158,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                                         wordHint.text = ""
                                         playerScore.text = getString(R.string.score, correct)
                                     }
+                                    Log.e(TAG, "checkifcorrect")
                                     startGame()
                                 }
                             },
@@ -166,6 +177,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                             wordHint.text = ""
                             playerScore.text = getString(R.string.score, correct)
                         }
+                        Log.e(TAG, "check if correct")
                         startGame()
                     }
                 }
@@ -260,7 +272,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
-            var randomWordScrambled: String = word
+            randomWordScrambled = word
             while (randomWordScrambled == word) {
                 Log.e(TAG, "Resetting randomwordscramble")
                 val a: CharArray = word.toCharArray()
@@ -274,7 +286,6 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                 randomWordScrambled = String(a)
             }
 
-            Log.e(TAG, "Resetting randomwordscramble2")
             val scrambledWord: TextView = findViewById(R.id.practiceScrambledWord)
             runOnUiThread {
                 textField.requestFocus()
@@ -303,4 +314,29 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         Arrays.sort(second)
         return first.contentEquals(second)
     }
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        super.onSaveInstanceState(savedInstanceState)
+        savedInstanceState.putInt("correct", correct)
+        savedInstanceState.putString("word", word)
+        savedInstanceState.putInt("hintNumber", hintNumber)
+        savedInstanceState.putString("randomWordScrambled", randomWordScrambled)
+        savedInstanceState.putString("lastWord", lastWord)
+        savedInstanceState.putSerializable("wordListLength", wordListLength)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        correct = savedInstanceState.getInt("correct")
+        word = savedInstanceState.getString("word").toString()
+        hintNumber = savedInstanceState.getInt("hintNumber")
+        randomWordScrambled = savedInstanceState.getString("randomWordScrambled").toString()
+        lastWord = savedInstanceState.getString("lastWord").toString()
+        wordListLength = savedInstanceState.getSerializable("wordListLength") as Array<Array<String>>
+        val hintWord = word.substring(0, hintNumber)
+        runOnUiThread {
+            wordHint.text = hintWord
+            playerScore.text = getString(R.string.score, correct)
+        }
+    }
+
 }
