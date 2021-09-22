@@ -173,7 +173,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
             if (!isSame) {
                 Log.e("TAG", "deleting isSame")
-                file.delete()
                 val queue: RequestQueue = Volley.newRequestQueue(this@MainActivity)
                 val url =
                     "https://vinaycat.pythonanywhere.com/getlengthword?length=$length"
@@ -182,8 +181,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     { stringResponse ->
                         Log.e("TAG", stringResponse)
                         val listOfWords: List<String> = stringResponse.split(",")
-                        for (word in listOfWords) {
-                            file.appendText(word + "\n")
+                        Log.e("TAG", file.absolutePath)
+                        file.parentFile.mkdirs()
+                        file.createNewFile()
+                        File(file.absolutePath).printWriter().use { out ->
+                            listOfWords.forEach {
+                                out.println("${it}\n")
+                            }
                         }
                         val inputAsString: String =
                             FileInputStream(file).bufferedReader().use { it.readText() }
@@ -203,6 +207,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         Log.e("|TAG", filesDir.toString())
         val letDirectory = File(filesDir, "wordsData")
         for (i in 2..12) {
+            Log.e("TAG", "words$i.txt")
             val file = File(letDirectory, "words$i.txt")
             generateFileWords(i, file)
         }

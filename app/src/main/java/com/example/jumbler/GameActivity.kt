@@ -23,7 +23,7 @@ import java.util.*
 import java.util.Collections.max
 import java.util.concurrent.Executors
 
-open class GameActivity : AppCompatActivity(), View.OnClickListener {
+class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word: String = ""
     private var lastWord: String = ""
     private var randomWordScrambled: String = ""
@@ -48,15 +48,18 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
     private val user1: MutableMap<String, Any?> = HashMap()
     private var isStartGame: Boolean = false
     private var correctWord: String = ""
+    private var startGameButton: Button? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
         val menu: Button = findViewById(R.id.buttonMenu)
+        startGameButton = findViewById(R.id.playGame)
         menu.setOnClickListener(this)
         val buttonRestart: Button = findViewById(R.id.buttonRestart)
-        val startGameButton: Button = findViewById(R.id.playGame)
 
         runOnUiThread {
+
             timerText.visibility = View.INVISIBLE
             textField.requestFocus()
             imm.showSoftInput(textField, InputMethodManager.SHOW_IMPLICIT)
@@ -73,9 +76,12 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
             val inputAsString: String = FileInputStream(file).bufferedReader().use { it.readText() }
             wordListLength += (inputAsString.split(" ") as MutableList<String>).toTypedArray()
         }
-        startGameButton.setOnClickListener{
+        startGameButton?.setOnClickListener{
             startGame()
-            isStartGame= true
+            isStartGame = true
+            runOnUiThread{
+                startGameButton?.visibility = View.INVISIBLE
+            }
         }
 
         // RESTART BUTTON
@@ -505,6 +511,7 @@ open class GameActivity : AppCompatActivity(), View.OnClickListener {
         Log.e(TAG, " seconds after rotate $seconds")
         if(isStartGame) {
             runOnUiThread {
+                startGameButton?.visibility = View.INVISIBLE
                 timerText.text = seconds.toString()
                 playerScore.text = getString(R.string.score, correct)
                 scrambledWord.text = randomWordScrambled
