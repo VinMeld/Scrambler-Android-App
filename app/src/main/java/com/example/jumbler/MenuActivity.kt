@@ -6,9 +6,17 @@ import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.SocketAddress
 
 class MenuActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +38,23 @@ class MenuActivity : AppCompatActivity() {
 
         game.setOnClickListener {
             if (inputAsString != "") {
-                startActivity(Intent(this@MenuActivity, GameActivity::class.java))
+                val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+                scopeFirebaseAdd.launch(Dispatchers.Default) {
+                    try {
+                        val timeoutMs = 1500
+                        val sock = Socket()
+                        val sockaddr: SocketAddress = InetSocketAddress("8.8.8.8", 53)
+                        sock.connect(sockaddr, timeoutMs)
+                        sock.close()
+                        startActivity(Intent(this@MenuActivity, GameActivity::class.java))
+                    } catch (e: IOException) {
+                        Snackbar.make(
+                            findViewById(android.R.id.content),
+                            "Connect to wifi to play!",
+                            Snackbar.LENGTH_LONG
+                        ).show()
+                    }
+                }
             } else {
                 Snackbar.make(
                     findViewById(android.R.id.content),
@@ -50,12 +74,28 @@ class MenuActivity : AppCompatActivity() {
         }
 
         leaderboard.setOnClickListener {
-            startActivity(
-                Intent(
-                    this@MenuActivity,
-                    PersonalLeaderboardActivity::class.java
-                )
-            )
+            val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+            scopeFirebaseAdd.launch(Dispatchers.Default) {
+                try {
+                    val timeoutMs = 1500
+                    val sock = Socket()
+                    val sockaddr: SocketAddress = InetSocketAddress("8.8.8.8", 53)
+                    sock.connect(sockaddr, timeoutMs)
+                    sock.close()
+                    startActivity(
+                        Intent(
+                            this@MenuActivity,
+                            PersonalLeaderboardActivity::class.java
+                        )
+                    )                } catch (e: IOException) {
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "Connect to wifi to view!",
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
+            }
+
         }
 
         practice.setOnClickListener {

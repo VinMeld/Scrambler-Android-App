@@ -2,6 +2,7 @@ package com.example.jumbler
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -19,9 +20,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.SocketAddress
 import java.util.*
 import java.util.Collections.max
 import java.util.concurrent.Executors
+
 
 class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word: String = ""
@@ -57,9 +64,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         startGameButton = findViewById(R.id.playGame)
         menu.setOnClickListener(this)
         val buttonRestart: Button = findViewById(R.id.buttonRestart)
-
         runOnUiThread {
-
             timerText.visibility = View.INVISIBLE
             textField.requestFocus()
             imm.showSoftInput(textField, InputMethodManager.SHOW_IMPLICIT)
@@ -76,10 +81,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             val inputAsString: String = FileInputStream(file).bufferedReader().use { it.readText() }
             wordListLength += (inputAsString.split(" ") as MutableList<String>).toTypedArray()
         }
-        startGameButton?.setOnClickListener{
+        startGameButton?.setOnClickListener {
             startGame()
             isStartGame = true
-            runOnUiThread{
+            runOnUiThread {
                 startGameButton?.visibility = View.INVISIBLE
             }
         }
@@ -115,6 +120,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun correctProcedure() {
+        if ((this@GameActivity.application as Jumbler).getIsOffline()) {
+            highScore = -2;
+        }
         correct++
         Log.e(TAG, "correct procedure $highScore : $correct")
         if (highScore + 1 == correct) {
@@ -175,7 +183,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
         scopeTimer.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             delay(1000L)
-            if(seconds == 20) {
+            if (seconds == 20) {
                 resetWord()
             }
             val guess: Job = launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
@@ -374,10 +382,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         Arrays.sort(second)
         return first.contentEquals(second)
     }
+
     override fun onPause() {
         super.onPause()
         Log.e(TAG, "in pause()")
-        if(!isChangingConfigurations) {
+        if (!isChangingConfigurations) {
             if (chances != 0) {
                 Log.e(TAG, "Adding to database")
                 addToDatabase()
@@ -390,7 +399,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onResume() {
-        if(!isChangingConfigurations) {
+        if (!isChangingConfigurations) {
             getUserHighScore()
         }
         Log.e(TAG, "on resume()")
@@ -405,25 +414,33 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val user: CollectionReference = db.collection("Users")
         var username: String
         var newScores: MutableList<Int>
+
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e(TAG, "in user information")
             val job1: Job = launch {
-                user.document(userID).get().addOnSuccessListener { document ->
-                    if (document != null) {
-                        username = document["username"] as String
-                        val scores = document["scores"]
-                        if (scores != null) {
-                            Log.e(TAG, "Setting user information")
-                            newScores = (scores as MutableList<Int>?)!!
-                            user1["username"] = username
-                            user1["scores"] = newScores
-                            Log.e(TAG, "trying for multiple scores")
+                Log.e(TAG, "userid $userID")
+                if (userID != "") {
+                    user.document(userID).get().addOnSuccessListener { document ->
+                        if (document != null) {
+                            username = document["username"] as String
+                            val scores = document["scores"]
+                            if (scores != null) {
+                                Log.e(TAG, "Setting user information")
+                                newScores = (scores as MutableList<Int>?)!!
+                                user1["username"] = username
+                                user1["scores"] = newScores
+                                Log.e(TAG, "trying for multiple scores")
+                            }
+                        } else {
+                            user1["failed"] = "failed"
+                            Log.d(TAG, "No such document")
                         }
-                    } else {
-                        Log.d(TAG, "No such document")
+                    }.addOnFailureListener { exception ->
+                        Log.d(TAG, "get failed with ", exception)
+                        user1["failed"] = "failed"
                     }
-                }.addOnFailureListener { exception ->
-                    Log.d(TAG, "get failed with ", exception)
+                } else {
+                    user1["failed"] = "failed"
                 }
             }
             while (!job1.isCompleted && user1.isEmpty()) {
@@ -439,51 +456,110 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         getHighScore.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             getUserInformation()
 
-            while (user1["scores"] == null) {
+            while (user1["scores"] == null && user1["failed"] == null) {
                 Log.e(TAG, "waiting for user1 to not be null ? $user1")
                 delay(1000L)
             }
-
-            val scores = user1["scores"]
-            Log.e(TAG, "in get user highScore $scores")
-            if (scores == 0) {
+            if(user1["failed"] != null){
+                    val scores = user1["scores"]
+                    Log.e(TAG, "in get user highScore $scores")
+                    if (scores == 0) {
+                        highScore = -2
+                    } else if (scores is List<*>) {
+                        try {
+                            val listScores: MutableList<Int> = scores as MutableList<Int>
+                            highScore = max(listScores)
+                        } catch (e: ClassCastException) {
+                            val listScores: MutableList<Long> = scores as MutableList<Long>
+                            // Using max() produces a fatal casting error
+                            var highestScore = 0
+                            for (score in listScores) if (score > highestScore) highestScore =
+                                score.toInt()
+                            highScore = highestScore
+                        }
+                    }
+                } else {
                 highScore = -2
-            } else if (scores is List<*>) {
-                try {
-                    val listScores: MutableList<Int> = scores as MutableList<Int>
-                    highScore = max(listScores)
-                } catch (e: ClassCastException) {
-                    val listScores: MutableList<Long> = scores as MutableList<Long>
-                    // Using max() produces a fatal casting error
-                    var highestScore = 0
-                    for (score in listScores) if (score > highestScore) highestScore = score.toInt()
-                    highScore = highestScore
-                }
             }
+        }
+    }
+
+    private fun isOnline(): Boolean {
+        return try {
+            val timeoutMs = 1500
+            val sock = Socket()
+            val sockaddr: SocketAddress = InetSocketAddress("8.8.8.8", 53)
+            sock.connect(sockaddr, timeoutMs)
+            sock.close()
+            true
+        } catch (e: IOException) {
+            false
         }
     }
 
     private fun addToDatabase() {
         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
         scopeFirebaseAdd.launch(Dispatchers.Default) {
-            val job1 = launch {
-                getUserInformation()
-            }
-            while (!job1.isCompleted) {
-                delay(1000L)
-            }
-            if (user1["username"] != null && correct != 0) {
-                val scores = user1["scores"] as MutableList<Int>
-                scores.add(correct)
-                user1["scores"] = scores
-                Log.e(TAG, user1.toString())
-                db.collection("Users").document(userID)
-                    .set(user1)
-                    .addOnSuccessListener { Log.d(TAG, "DocumentSnapshot successfully written!") }
-                    .addOnFailureListener { e -> Log.w(TAG, "Error writing document", e) }
+
+            if (!isOnline()) {
+                val preferencesEmail: SharedPreferences by lazy {
+                    getSharedPreferences(
+                        "email",
+                        MODE_PRIVATE
+                    )
+                }
+                val preferencesPassword: SharedPreferences by lazy {
+                    getSharedPreferences(
+                        "password",
+                        MODE_PRIVATE
+                    )
+                }
+                val email: String = preferencesEmail.getString("email", "").toString()
+                val password: String = preferencesPassword.getString("password", "").toString()
+                if (email != "" && password != "") {
+                    val letDirectory = File(filesDir, "scores")
+                    val file = File(letDirectory, "score.txt")
+                    file.parentFile.mkdirs()
+                    if (!file.exists()) {
+                        file.createNewFile()
+                        File(file.absolutePath).printWriter().use { out ->
+                            out.println(email + "\n")
+                            out.println(password + "\n")
+                            out.println("$correct\n")
+                        }
+                    } else {
+                        FileOutputStream(file, true).bufferedWriter().use { writer ->
+                            writer.append("$correct\n")
+                        }
+                    }
+                }
+
+            } else {
+                val job1 = launch {
+                    getUserInformation()
+                }
+                while (!job1.isCompleted) {
+                    delay(1000L)
+                }
+                if (user1["username"] != null && correct != 0) {
+                    val scores = user1["scores"] as MutableList<Int>
+                    scores.add(correct)
+                    user1["scores"] = scores
+                    Log.e(TAG, user1.toString())
+                    db.collection("Users").document(userID)
+                        .set(user1)
+                        .addOnSuccessListener {
+                            Log.d(
+                                TAG,
+                                "DocumentSnapshot successfully written!"
+                            )
+                        }
+                        .addOnFailureListener { e -> Log.w(TAG, "Error writing document", e) }
+                }
             }
         }
     }
+
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
         super.onSaveInstanceState(savedInstanceState)
         savedInstanceState.putInt("correct", correct)
@@ -505,11 +581,12 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         randomWordScrambled = savedInstanceState.getString("randomWordScrambled").toString()
         lastWord = savedInstanceState.getString("lastWord").toString()
         correctWord = savedInstanceState.getString("correctWord").toString()
-        wordListLength = savedInstanceState.getSerializable("wordListLength") as Array<Array<String>>
+        wordListLength =
+            savedInstanceState.getSerializable("wordListLength") as Array<Array<String>>
         val entered = savedInstanceState.getString("enter").toString()
         isStartGame = savedInstanceState.getBoolean("isStartGame")
         Log.e(TAG, " seconds after rotate $seconds")
-        if(isStartGame) {
+        if (isStartGame) {
             runOnUiThread {
                 startGameButton?.visibility = View.INVISIBLE
                 timerText.text = seconds.toString()
