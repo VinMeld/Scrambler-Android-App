@@ -1,13 +1,12 @@
 package com.example.jumbler.utils
 
-import androidx.recyclerview.widget.RecyclerView
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
-import com.example.jumbler.R
+import android.view.ViewGroup
 import android.widget.TextView
-import java.lang.StringBuilder
-import java.util.ArrayList
+import androidx.recyclerview.widget.RecyclerView
+import com.example.jumbler.R
+import java.util.*
 
 class LeaderboardAdapter : RecyclerView.Adapter<LeaderboardAdapter.ViewHolder>() {
     private var rankings: ArrayList<LeaderboardItem> = ArrayList<LeaderboardItem>()

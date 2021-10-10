@@ -2,6 +2,7 @@ package com.example.jumbler
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.net.ConnectivityManager
@@ -27,17 +28,27 @@ import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.io.FileOutputStream
 import java.util.concurrent.Executors
+
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private val editTextEmail: EditText by lazy { findViewById(R.id.textEmail1) }
     private val editTextPassword: EditText by lazy { findViewById(R.id.textPassword1) }
-    private val preferencesEmail: SharedPreferences by lazy { getSharedPreferences("email", MODE_PRIVATE) }
-    private val preferencesPassword: SharedPreferences by lazy { getSharedPreferences("password", MODE_PRIVATE) }
+    private val preferencesEmail: SharedPreferences by lazy {
+        getSharedPreferences(
+            "email",
+            MODE_PRIVATE
+        )
+    }
+    private val preferencesPassword: SharedPreferences by lazy {
+        getSharedPreferences(
+            "password",
+            MODE_PRIVATE
+        )
+    }
     private val progressBar: ProgressBar by lazy { findViewById(R.id.progressBar) }
     private val mAuth: FirebaseAuth = FirebaseAuth.getInstance()
-
+    private lateinit var sqLiteDatabaseObj: SQLiteDatabase
     override fun onClick(v: View) {
         when (v.id) {
             R.id.textRegister -> startActivity(Intent(this, RegisterUser::class.java))
@@ -215,7 +226,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val sharedPreferences: SharedPreferences = this.getSharedPreferences("displayMode", MODE_PRIVATE)
+
+        val sharedPreferences: SharedPreferences =
+            this.getSharedPreferences("displayMode", MODE_PRIVATE)
         when {
             sharedPreferences.getString("displayMode", null) == "light" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -231,6 +244,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         if (isNetworkConnected()) {
             createFilesAndGenerate()
+            createDictionaryDatabase()
         } else {
             (this.application as Jumbler).setIsOffline(true)
             startActivity(Intent(this@MainActivity, MenuActivity::class.java))
@@ -277,5 +291,63 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 editor.apply()
             }
         }
+    }
+
+    private fun createDictionaryDatabase() {
+        val letDirectory = File(filesDir, "dictData")
+        val file = File(letDirectory, "dictionary.txt")
+        file.parentFile.mkdirs()
+        file.createNewFile()
+        val inputAsString: String = try {
+            FileInputStream(file).bufferedReader().use { it.readText() }
+        } catch (e: FileNotFoundException) {
+            ""
+        }
+        if (inputAsString != "") {
+            val scopeAddWords = CoroutineScope(CoroutineName("Timer"))
+            scopeAddWords.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                val queue1: RequestQueue = Volley.newRequestQueue(this@MainActivity)
+                val url1 = "https://vinaycat1.pythonanywhere.com/return"
+                val stringRequest1 = StringRequest(
+                    Request.Method.GET, url1,
+                    { stringResponse ->
+                        Log.e("TAG", stringResponse)
+
+                        File(file.absolutePath).printWriter().use { out ->
+                            out.println(stringResponse)
+                        }
+                        val inputAsString: String =
+                            FileInputStream(file).bufferedReader().use { it.readText() }
+                        Log.e("TAG", inputAsString)
+                    },
+                    { volleyError ->
+                        // handle error
+                        Log.e("TAG", "Error in getting word $volleyError")
+                    }
+                )
+                queue1.add(stringRequest1)
+            }
+        }
+    }
+
+
+    private fun readDataFromDatabase(word: String): Boolean {
+        // val cursorCourses: Cursor = sqLiteDatabaseObj.rawQuery("SELECT $COL_NAME FROM $TABLENAME WHERE $COL_NAME = '$word'", null);
+//        while (cursorCourses.moveToNext()) {
+//            if(cursorCourses.getString(0) == word){
+//                return true;
+//            }
+//            return false;
+//        }
+//        return false;
+        val letDirectory = File(filesDir, "dictData")
+        val file = File(letDirectory, "dictionary.txt")
+        val inputAsString: String = try {
+            FileInputStream(file).bufferedReader().use { it.readText() }
+        } catch (e: FileNotFoundException) {
+            ""
+        }
+        Log.e("TAG", inputAsString)
+        return inputAsString.contains(" $word ")
     }
 }

@@ -2,6 +2,7 @@ package com.example.jumbler
 
 import android.content.Context
 import android.content.Intent
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -14,11 +15,16 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.jumbler.utils.COL_NAME
+import com.example.jumbler.utils.DATABASENAME
+import com.example.jumbler.utils.TABLENAME
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.util.*
 import java.util.concurrent.Executors
+
 
 open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     private var word: String = ""
@@ -32,7 +38,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     private val imm: InputMethodManager by lazy { getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager }
     private val scopeTimer: CoroutineScope = CoroutineScope(CoroutineName("Timer"))
     private var randomWordScrambled: String = ""
-
+    private lateinit var sqLiteDatabaseObj: SQLiteDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_practice)
@@ -41,7 +47,6 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         val buttonHint: Button = findViewById(R.id.buttonHint)
         val buttonRestart: Button = findViewById(R.id.buttonPracticeRestart)
         val letDirectory = File(filesDir, "wordsData")
-
         for (i in 2..12) {
             val file = File(letDirectory, "words$i.txt")
             val inputAsString: String = FileInputStream(file).bufferedReader().use { it.readText() }
@@ -52,7 +57,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
             textField.requestFocus()
             imm.showSoftInput(textField, InputMethodManager.SHOW_IMPLICIT)
         }
-        if(word == "") {
+        if (word == "") {
             Log.e(TAG, "calling from word ==")
             startGame()
         }
@@ -119,6 +124,18 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun readDataFromDatabase(word: String): Boolean {
+        val letDirectory = File(filesDir, "dictData")
+        //val letter = word.first()
+        val file = File(letDirectory, "dictionary.txt")
+        val inputAsString: String = try {
+            FileInputStream(file).bufferedReader().use { it.readText() }
+        } catch (e: FileNotFoundException) {
+            ""
+        }
+        return inputAsString.contains(" $word ")
+    }
+
     private fun checkIfCorrect() {
         var correctBool = false
         if (word != "" || lastWord != word) {
@@ -136,38 +153,50 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
                         correctBool = true
                     }
                     if (!correctBool) {
-                        val queue: RequestQueue = Volley.newRequestQueue(this@PracticeActivity)
                         val enteredWord: String = textField.text.toString().trim()
-                        val apiKey: String = getString(R.string.parse_application_id)
-                        val url =
-                            "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
-                        val stringRequest = StringRequest(
-                            Request.Method.GET, url,
-                            { stringResponse ->
-                                Log.e(TAG, stringResponse)
-                                if (stringResponse.contains("meta")) {
-                                    Log.e(TAG, "Guessed a correct word from webster")
-                                    correctBool = true
-
-                                }
-                                if (correctBool) {
-                                    if (hintNumber == 0) correct++
-                                    hintNumber = 0
-                                    runOnUiThread {
-                                        textField.text.clear()
-                                        wordHint.text = ""
-                                        playerScore.text = getString(R.string.score, correct)
-                                    }
-                                    Log.e(TAG, "checkifcorrect")
-                                    startGame()
-                                }
-                            },
-                            { volleyError ->
-                                // handle error
-                                Log.e(TAG, "Error in getting word $volleyError")
+                        if (readDataFromDatabase(enteredWord)) {
+                            if (hintNumber == 0) correct++
+                            hintNumber = 0
+                            runOnUiThread {
+                                textField.text.clear()
+                                wordHint.text = ""
+                                playerScore.text = getString(R.string.score, correct)
                             }
-                        )
-                        queue.add(stringRequest)
+                            Log.e(TAG, "checkifcorrect")
+                            startGame()
+                        }
+//                        val queue: RequestQueue = Volley.newRequestQueue(this@PracticeActivity)
+//                        val enteredWord: String = textField.text.toString().trim()
+//                        val apiKey: String = getString(R.string.parse_application_id)
+//                        val url =
+//                            "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
+//                        val stringRequest = StringRequest(
+//                            Request.Method.GET, url,
+//                            { stringResponse ->
+//                                Log.e(TAG, stringResponse)
+//                                if (stringResponse.contains("meta")) {
+//                                    Log.e(TAG, "Guessed a correct word from webster")
+//                                    correctBool = true
+//
+//                                }
+//                                if (correctBool) {
+//                                    if (hintNumber == 0) correct++
+//                                    hintNumber = 0
+//                                    runOnUiThread {
+//                                        textField.text.clear()
+//                                        wordHint.text = ""
+//                                        playerScore.text = getString(R.string.score, correct)
+//                                    }
+//                                    Log.e(TAG, "checkifcorrect")
+//                                    startGame()
+//                                }
+//                            },
+//                            { volleyError ->
+//                                // handle error
+//                                Log.e(TAG, "Error in getting word $volleyError")
+//                            }
+//                        )
+//                        queue.add(stringRequest)
                     } else {
                         // If they got it right then cancel guess and restart
                         if (hintNumber == 0) correct++
@@ -314,6 +343,7 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         Arrays.sort(second)
         return first.contentEquals(second)
     }
+
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
         super.onSaveInstanceState(savedInstanceState)
         savedInstanceState.putInt("correct", correct)
@@ -331,7 +361,8 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         hintNumber = savedInstanceState.getInt("hintNumber")
         randomWordScrambled = savedInstanceState.getString("randomWordScrambled").toString()
         lastWord = savedInstanceState.getString("lastWord").toString()
-        wordListLength = savedInstanceState.getSerializable("wordListLength") as Array<Array<String>>
+        wordListLength =
+            savedInstanceState.getSerializable("wordListLength") as Array<Array<String>>
         val hintWord = word.substring(0, hintNumber)
         runOnUiThread {
             wordHint.text = hintWord
@@ -339,4 +370,52 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun createDictionaryDatabase() {
+        sqLiteDatabaseObj = openOrCreateDatabase(DATABASENAME, Context.MODE_PRIVATE, null)
+        val createTable = "CREATE TABLE IF NOT EXISTS $TABLENAME ($COL_NAME TEXT);"
+        sqLiteDatabaseObj.execSQL(createTable)
+        val scopeAddWords = CoroutineScope(CoroutineName("Timer"))
+        scopeAddWords.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+
+            val queue1: RequestQueue = Volley.newRequestQueue(this@PracticeActivity)
+            val url1 = "https://vinaycat1.pythonanywhere.com/return"
+            val stringRequest1 = StringRequest(
+                Request.Method.GET, url1,
+                { stringResponse ->
+                    for (dictionaryWord in stringResponse.split(" ")) {
+                        if (!readDataFromDatabase(dictionaryWord)) {
+                            val chars: CharArray = dictionaryWord.toCharArray()
+                            var isLetters = true
+                            for (c in chars) {
+                                if (!Character.isLetter(c)) {
+                                    isLetters = false
+                                    break
+                                }
+                            }
+                            if (isLetters) {
+                                Log.e("TAG", "Adding to datagbase $dictionaryWord")
+                                with(sqLiteDatabaseObj) { this.execSQL("INSERT INTO $TABLENAME (${COL_NAME}) VALUES('$dictionaryWord');") }
+                            }
+                        }
+                    }
+                },
+                { volleyError ->
+                    // handle error
+                    Log.e("TAG", "Error in getting word $volleyError")
+                }
+            )
+            queue1.add(stringRequest1)
+
+        }
+    }
+//    private fun readDataFromDatabase(word : String): Boolean{
+//        val cursorCourses: Cursor = sqLiteDatabaseObj.rawQuery("SELECT $COL_NAME FROM $TABLENAME WHERE $COL_NAME = \"$word\"", null);
+//        while (cursorCourses.moveToNext()) {
+//            if(cursorCourses.getString(0) == word){
+//                return true;
+//            }
+//            return false;
+//        }
+//        return false;
+//    }
 }

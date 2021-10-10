@@ -53,7 +53,7 @@ class ProfileActivity : AppCompatActivity() {
                 sock.close()
                 Log.e(TAG, "wifi")
                 isOnline = true
-                if(userID == ""){
+                if (userID == "") {
                     isOnline = false
                 }
             } catch (e: IOException) {
@@ -64,7 +64,8 @@ class ProfileActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     activityView.visibility = View.VISIBLE
                     logout.visibility = View.INVISIBLE
-                    emailTextView.text = "Connect to wifi to view more!\n If connected, try restarting!"
+                    emailTextView.text =
+                        "Connect to wifi to view more!\n If connected, try restarting!"
                 }
                 menu.setOnClickListener {
                     FirebaseAuth.getInstance().signOut()
@@ -72,7 +73,7 @@ class ProfileActivity : AppCompatActivity() {
                 }
             }
             delay(500L)
-            if(isOnline) {
+            if (isOnline) {
                 fun clearUser() {
                     val preferences: SharedPreferences =
                         getSharedPreferences("checkbox", MODE_PRIVATE)
@@ -112,8 +113,10 @@ class ProfileActivity : AppCompatActivity() {
                             getString(R.string.generic_error),
                             Snackbar.LENGTH_LONG
                         ).show()
-                        runOnUiThread { progressBar.visibility = View.GONE
-                            activityView.visibility = View.VISIBLE }
+                        runOnUiThread {
+                            progressBar.visibility = View.GONE
+                            activityView.visibility = View.VISIBLE
+                        }
 
                     }
                 })

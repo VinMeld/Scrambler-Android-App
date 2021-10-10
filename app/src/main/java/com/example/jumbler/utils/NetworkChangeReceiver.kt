@@ -1,23 +1,17 @@
 package com.example.jumbler.utils
 
-import android.net.ConnectivityManager
-
-import android.content.Intent
-
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.net.wifi.WifiConfiguration.AuthAlgorithm.strings
-import android.system.Os.remove
-import java.io.File
-import java.io.FileInputStream
+import android.content.Intent
+import android.net.ConnectivityManager
 import android.util.Log
-import com.example.jumbler.GameActivity
-import com.example.jumbler.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
+import java.io.File
+import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.util.*
 import java.util.concurrent.Executors
@@ -26,7 +20,7 @@ import java.util.concurrent.Executors
 class NetworkChangeReceiver : BroadcastReceiver() {
     private val user1: MutableMap<String, Any?> = HashMap()
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
-    private var userID : String = ""
+    private var userID: String = ""
     override fun onReceive(context: Context, intent: Intent?) {
         Log.e("TAG", "in onReceive")
         val connMgr = context
@@ -39,15 +33,16 @@ class NetworkChangeReceiver : BroadcastReceiver() {
             // WIFI ON
             val letDirectory = File(context.filesDir, "scores")
             val file = File(letDirectory, "score.txt")
-            if(file.exists()){
+            if (file.exists()) {
                 val inputAsString: String = try {
                     FileInputStream(file).bufferedReader().use { it.readText() }
                 } catch (e: FileNotFoundException) {
                     ""
                 }
-                if(inputAsString != "") {
+                if (inputAsString != "") {
                     retrieveID(inputAsString)
-                    val correctInput: Array<Int> = inputAsString.split(" ").map { it.toInt() }.toTypedArray()
+                    val correctInput: Array<Int> =
+                        inputAsString.split(" ").map { it.toInt() }.toTypedArray()
                     for (i in 2..correctInput.size) {
                         val correct = correctInput[i]
                         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
@@ -58,7 +53,7 @@ class NetworkChangeReceiver : BroadcastReceiver() {
                             while (!job1.isCompleted) {
                                 delay(1000L)
                             }
-                            if(userID != "failed") {
+                            if (userID != "failed") {
                                 if (user1["username"] != null && correct != 0) {
                                     val scores = user1["scores"] as MutableList<Int>
                                     scores.add(correct)
@@ -89,6 +84,7 @@ class NetworkChangeReceiver : BroadcastReceiver() {
             Log.d("Network Available ", "Flag No 1")
         }
     }
+
     private fun getUserInformation() {
 
         val user: CollectionReference = db.collection("Users")
@@ -98,10 +94,10 @@ class NetworkChangeReceiver : BroadcastReceiver() {
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e("TAG", "in user information")
             val job1: Job = launch {
-                while(userID == ""){
+                while (userID == "") {
                     delay(100L)
                 }
-                if(userID != "failed") {
+                if (userID != "failed") {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
                             username = document["username"] as String
@@ -130,7 +126,8 @@ class NetworkChangeReceiver : BroadcastReceiver() {
             Log.e("TAG", "user 1 is not null : $user1")
         }
     }
-    private fun retrieveID(inputAsString : String) {
+
+    private fun retrieveID(inputAsString: String) {
         val mAuth: FirebaseAuth = FirebaseAuth.getInstance()
         val email = inputAsString.split(" ")[0]
         val password = inputAsString.split(" ")[1]
@@ -147,6 +144,6 @@ class NetworkChangeReceiver : BroadcastReceiver() {
             }
         }.addOnCanceledListener {
             userID = "failed"
-         }
+        }
     }
 }

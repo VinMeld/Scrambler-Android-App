@@ -9,19 +9,12 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketAddress
@@ -121,7 +114,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun correctProcedure() {
         if ((this@GameActivity.application as Jumbler).getIsOffline()) {
-            highScore = -2;
+            highScore = -2
         }
         correct++
         Log.e(TAG, "correct procedure $highScore : $correct")
@@ -174,6 +167,18 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun readDataFromDatabase(word: String): Boolean {
+        val letDirectory = File(filesDir, "dictData")
+        //val letter = word.first()
+        val file = File(letDirectory, "dictionary.txt")
+        val inputAsString: String = try {
+            FileInputStream(file).bufferedReader().use { it.readText() }
+        } catch (e: FileNotFoundException) {
+            ""
+        }
+        return inputAsString.contains(" $word ")
+    }
+
     private fun startGame() {
         Log.e(TAG, "StartGame")
         runOnUiThread {
@@ -217,25 +222,30 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         if (lastGuess != textField.text.toString()) {
                             lastGuess = textField.text.toString()
                             if (!correctBool) {
-                                val queue: RequestQueue = Volley.newRequestQueue(this@GameActivity)
                                 val enteredWord: String = textField.text.toString().trim()
-                                val apiKey: String = getString(R.string.parse_application_id)
-                                val url =
-                                    "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
-                                val stringRequest = StringRequest(Request.Method.GET, url,
-                                    { stringResponse ->
-                                        Log.e(TAG, stringResponse)
-                                        if (stringResponse.contains("meta")) {
-                                            Log.e(TAG, "Guessed a correct word from webster")
-                                            correctBool = true
-                                        }
-                                    },
-                                    { volleyError ->
-                                        // handle error
-                                        Log.e(TAG, "Error in getting word $volleyError")
-                                    }
-                                )
-                                queue.add(stringRequest)
+                                if (readDataFromDatabase(enteredWord)) {
+                                    correctBool = true
+                                    Log.e(TAG, "Got it right from dictionary")
+                                }
+//                                val queue: RequestQueue = Volley.newRequestQueue(this@GameActivity)
+//                                val enteredWord: String = textField.text.toString().trim()
+//                                val apiKey: String = getString(R.string.parse_application_id)
+//                                val url =
+//                                    "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
+//                                val stringRequest = StringRequest(Request.Method.GET, url,
+//                                    { stringResponse ->
+//                                        Log.e(TAG, stringResponse)
+//                                        if (stringResponse.contains("meta")) {
+//                                            Log.e(TAG, "Guessed a correct word from webster")
+//                                            correctBool = true
+//                                        }
+//                                    },
+//                                    { volleyError ->
+//                                        // handle error
+//                                        Log.e(TAG, "Error in getting word $volleyError")
+//                                    }
+//                                )
+//                                queue.add(stringRequest)
                             }
                         }
                     }
@@ -460,25 +470,26 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 Log.e(TAG, "waiting for user1 to not be null ? $user1")
                 delay(1000L)
             }
-            if(user1["failed"] != null){
-                    val scores = user1["scores"]
-                    Log.e(TAG, "in get user highScore $scores")
-                    if (scores == 0) {
-                        highScore = -2
-                    } else if (scores is List<*>) {
-                        try {
-                            val listScores: MutableList<Int> = scores as MutableList<Int>
-                            highScore = max(listScores)
-                        } catch (e: ClassCastException) {
-                            val listScores: MutableList<Long> = scores as MutableList<Long>
-                            // Using max() produces a fatal casting error
-                            var highestScore = 0
-                            for (score in listScores) if (score > highestScore) highestScore =
-                                score.toInt()
-                            highScore = highestScore
-                        }
+            if (user1["scores"] != null) {
+                val scores = user1["scores"]
+                Log.e(TAG, "in get user highScore $scores")
+//                if (scores == 0) {
+//                    highScore = -2
+//                } else
+                if (scores is List<*>) {
+                    try {
+                        val listScores: MutableList<Int> = scores as MutableList<Int>
+                        highScore = max(listScores)
+                    } catch (e: ClassCastException) {
+                        val listScores: MutableList<Long> = scores as MutableList<Long>
+                        // Using max() produces a fatal casting error
+                        var highestScore = 0
+                        for (score in listScores) if (score > highestScore) highestScore =
+                            score.toInt()
+                        highScore = highestScore
                     }
-                } else {
+                }
+            } else {
                 highScore = -2
             }
         }
@@ -500,7 +511,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private fun addToDatabase() {
         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
         scopeFirebaseAdd.launch(Dispatchers.Default) {
-
             if (!isOnline()) {
                 val preferencesEmail: SharedPreferences by lazy {
                     getSharedPreferences(
@@ -518,18 +528,18 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 val password: String = preferencesPassword.getString("password", "").toString()
                 if (email != "" && password != "") {
                     val letDirectory = File(filesDir, "scores")
-                    val file = File(letDirectory, "score.txt")
+                    val file = File(letDirectory, email)
                     file.parentFile.mkdirs()
                     if (!file.exists()) {
                         file.createNewFile()
                         File(file.absolutePath).printWriter().use { out ->
-                            out.println(email + "\n")
-                            out.println(password + "\n")
-                            out.println("$correct\n")
+                            out.println("$email ")
+                            out.println("$password ")
+                            out.println("$correct ")
                         }
                     } else {
                         FileOutputStream(file, true).bufferedWriter().use { writer ->
-                            writer.append("$correct\n")
+                            writer.append("$correct\n ")
                         }
                     }
                 }
