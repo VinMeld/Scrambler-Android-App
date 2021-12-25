@@ -125,14 +125,19 @@ open class PracticeActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun readDataFromDatabase(word: String): Boolean {
+        Log.e(TAG, "in read from database");
         val letDirectory = File(filesDir, "dictData")
         //val letter = word.first()
         val file = File(letDirectory, "dictionary.txt")
+
         val inputAsString: String = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
         } catch (e: FileNotFoundException) {
             ""
         }
+        Log.e(TAG, "Input as string: $inputAsString");
+        Log.e(TAG, "Word: $word");
+        Log.e(TAG, inputAsString.contains(" $word ").toString());
         return inputAsString.contains(" $word ")
     }
 

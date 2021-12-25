@@ -46,6 +46,7 @@ class MenuActivity : AppCompatActivity() {
                 } catch (e: FileNotFoundException) {
                     ""
                 }
+                Log.e("TAG", inputAsString);
                 if (inputAsString != "") {
                     retrieveID(inputAsString)
                     while (userID == "") {

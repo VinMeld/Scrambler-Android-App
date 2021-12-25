@@ -298,12 +298,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val file = File(letDirectory, "dictionary.txt")
         file.parentFile.mkdirs()
         file.createNewFile()
+        Log.e("TAG", "Creating database");
         val inputAsString: String = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
         } catch (e: FileNotFoundException) {
             ""
         }
-        if (inputAsString != "") {
+        if (inputAsString == "") {
+            Log.e("TAG", "Creating database, string empty");
             val scopeAddWords = CoroutineScope(CoroutineName("Timer"))
             scopeAddWords.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val queue1: RequestQueue = Volley.newRequestQueue(this@MainActivity)
@@ -311,14 +313,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 val stringRequest1 = StringRequest(
                     Request.Method.GET, url1,
                     { stringResponse ->
-                        Log.e("TAG", stringResponse)
-
+                        Log.e("TAG", "Creating database, request was successful");
+                        Log.e("TAG", stringResponse);
                         File(file.absolutePath).printWriter().use { out ->
                             out.println(stringResponse)
                         }
                         val inputAsString: String =
                             FileInputStream(file).bufferedReader().use { it.readText() }
-                        Log.e("TAG", inputAsString)
+                        Log.e("TAG", "Outputing file");
+                        Log.e("TAG", inputAsString);
                     },
                     { volleyError ->
                         // handle error
