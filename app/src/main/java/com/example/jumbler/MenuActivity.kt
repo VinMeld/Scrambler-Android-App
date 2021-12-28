@@ -4,8 +4,11 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -26,27 +29,42 @@ class MenuActivity : AppCompatActivity() {
     private val user1: MutableMap<String, Any?> = HashMap()
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private var userID: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
-        val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+
+        if (!(this.application as Jumbler).isDeviceOnline()) {
+            findViewById<Button>(R.id.buttonLeaderboard).visibility = View.GONE
+            findViewById<Button>(R.id.buttonSettings).visibility = View.GONE
+            findViewById<Button>(R.id.buttonReturnToLogin).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.offlineModeNotice).visibility = View.VISIBLE
+        }
+
+        var scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
         scopeFirebaseAdd.launch(Dispatchers.Default) {
             val letDirectory1 = File(filesDir, "scores")
-            val preferencesEmail: SharedPreferences by lazy {
+            val preferences: SharedPreferences by lazy {
                 getSharedPreferences(
-                    "email",
+                    getString(R.string.app_preference_file_key),
                     MODE_PRIVATE
                 )
             }
-            val email: String = preferencesEmail.getString("email", "").toString()
+            val email: String = preferences.getString("email", "").toString()
             val file1 = File(letDirectory1, email)
             if (file1.exists()) {
-                val inputAsString: String = try {
-                    FileInputStream(file1).bufferedReader().use { it.readText() }
-                } catch (e: FileNotFoundException) {
-                    ""
+                var inputAsString = ""
+                CoroutineScope(Dispatchers.IO).launch {
+                    runCatching {
+                        inputAsString = try {
+                            FileInputStream(file1).bufferedReader().use { it.readText() }
+                        } catch (e: FileNotFoundException) {
+                            ""
+                        }
+                    }
                 }
-                Log.e("TAG", inputAsString);
+
+                Log.e("TAG", inputAsString)
                 if (inputAsString != "") {
                     retrieveID(inputAsString)
                     while (userID == "") {
@@ -95,10 +113,6 @@ class MenuActivity : AppCompatActivity() {
             }
         }
 
-        val game: Button = findViewById(R.id.buttonStart)
-        val profile: Button = findViewById(R.id.buttonProfile)
-        val leaderboard: Button = findViewById(R.id.buttonLeaderboard)
-        val practice: Button = findViewById(R.id.buttonPractice)
         Log.e("|TAG", filesDir.toString())
         val letDirectory = File(filesDir, "wordsData")
         val file = File(letDirectory, "words3.txt")
@@ -108,26 +122,9 @@ class MenuActivity : AppCompatActivity() {
             ""
         }.toString()
 
-        game.setOnClickListener {
+        findViewById<Button>(R.id.buttonStart).setOnClickListener {
             if (inputAsString != "") {
-               // val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
-//                scopeFirebaseAdd.launch(Dispatchers.Default) {
-//                    try {
-//                        val timeoutMs = 1500
-//                        val sock = Socket()
-//                        val sockaddr: SocketAddress = InetSocketAddress("8.8.8.8", 53)
-//                        sock.connect(sockaddr, timeoutMs)
-//                        sock.close()
-                        startActivity(Intent(this@MenuActivity, GameActivity::class.java))
-//                    } catch (e: IOException) {
-//                        Snackbar.make(
-//                            findViewById(android.R.id.content),
-//                            "Connect to wifi to play!",
-//                            Snackbar.LENGTH_LONG
-//                        ).show()
-//                    }
-//                }
-//            } else {
+                startActivity(Intent(this@MenuActivity, GameActivity::class.java))
                 Snackbar.make(
                     findViewById(android.R.id.content),
                     getString(R.string.dictionary_error),
@@ -136,28 +133,28 @@ class MenuActivity : AppCompatActivity() {
             }
         }
 
-        profile.setOnClickListener {
-            startActivity(
-                Intent(
-                    this@MenuActivity,
-                    ProfileActivity::class.java
-                )
-            )
+        findViewById<Button>(R.id.buttonSettings).setOnClickListener {
+            startActivity(Intent(this@MenuActivity, SettingsActivity::class.java))
         }
 
-        leaderboard.setOnClickListener {
-            val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
+        findViewById<Button>(R.id.buttonLeaderboard).setOnClickListener {
+            scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
             scopeFirebaseAdd.launch(Dispatchers.Default) {
                 try {
                     val timeoutMs = 1500
                     val sock = Socket()
                     val sockaddr: SocketAddress = InetSocketAddress("8.8.8.8", 53)
-                    sock.connect(sockaddr, timeoutMs)
-                    sock.close()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        runCatching {
+                            sock.connect(sockaddr, timeoutMs)
+                            sock.close()
+                        }
+                    }
+
                     startActivity(
                         Intent(
                             this@MenuActivity,
-                            PersonalLeaderboardActivity::class.java
+                            LeaderboardsActivity::class.java
                         )
                     )
                 } catch (e: IOException) {
@@ -168,17 +165,11 @@ class MenuActivity : AppCompatActivity() {
                     ).show()
                 }
             }
-
         }
 
-        practice.setOnClickListener {
+        findViewById<Button>(R.id.buttonPractice).setOnClickListener {
             if (inputAsString != "") {
-                startActivity(
-                    Intent(
-                        this@MenuActivity,
-                        PracticeActivity::class.java
-                    )
-                )
+                startActivity(Intent(this@MenuActivity, PracticeActivity::class.java))
             } else {
                 Snackbar.make(
                     findViewById(android.R.id.content),
@@ -186,6 +177,10 @@ class MenuActivity : AppCompatActivity() {
                     Snackbar.LENGTH_LONG
                 ).show()
             }
+        }
+
+        findViewById<Button>(R.id.buttonReturnToLogin).setOnClickListener {
+            startActivity(Intent(this@MenuActivity, MainActivity::class.java))
         }
     }
 
@@ -209,11 +204,9 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun getUserInformation() {
-
+        val getUser = CoroutineScope(CoroutineName("getUser"))
         val user: CollectionReference = db.collection("Users")
-        var username: String
-        var newScores: MutableList<Int>
-        val getUser: CoroutineScope = CoroutineScope(CoroutineName("getUser"))
+
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e("TAG", "in user information")
             val job1: Job = launch {
@@ -224,11 +217,11 @@ class MenuActivity : AppCompatActivity() {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
                             Log.e("TAG", document["username"].toString())
-                            username = document["username"] as String
+                            val username = document["username"] as String
                             val scores = document["scores"]
                             if (scores != null) {
                                 Log.e("TAG", "Setting user information")
-                                newScores = (scores as MutableList<Int>?)!!
+                                val newScores = (scores as MutableList<Int>?)!!
                                 user1["username"] = username
                                 user1["scores"] = newScores
                                 Log.e("TAG", "trying for multiple scores")
@@ -251,8 +244,11 @@ class MenuActivity : AppCompatActivity() {
         }
     }
 
-
     override fun onBackPressed() {
-        return
+        if ((this.application as Jumbler).isDeviceOnline()) {
+            moveTaskToBack(true)
+        } else {
+            super.onBackPressed()
+        }
     }
 }

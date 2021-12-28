@@ -16,11 +16,11 @@ import java.io.FileNotFoundException
 import java.util.*
 import java.util.concurrent.Executors
 
-
 class NetworkChangeReceiver : BroadcastReceiver() {
     private val user1: MutableMap<String, Any?> = HashMap()
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private var userID: String = ""
+
     override fun onReceive(context: Context, intent: Intent?) {
         Log.e("TAG", "in onReceive")
         val connMgr = context
@@ -86,11 +86,9 @@ class NetworkChangeReceiver : BroadcastReceiver() {
     }
 
     private fun getUserInformation() {
-
+        val getUser = CoroutineScope(CoroutineName("getUser"))
         val user: CollectionReference = db.collection("Users")
-        var username: String
-        var newScores: MutableList<Int>
-        val getUser: CoroutineScope = CoroutineScope(CoroutineName("getUser"))
+
         getUser.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
             Log.e("TAG", "in user information")
             val job1: Job = launch {
@@ -100,11 +98,11 @@ class NetworkChangeReceiver : BroadcastReceiver() {
                 if (userID != "failed") {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
-                            username = document["username"] as String
+                            val username = document["username"] as String
                             val scores = document["scores"]
                             if (scores != null) {
                                 Log.e("TAG", "Setting user information")
-                                newScores = (scores as MutableList<Int>?)!!
+                                val newScores = (scores as MutableList<Int>?)!!
                                 user1["username"] = username
                                 user1["scores"] = newScores
                                 Log.e("TAG", "trying for multiple scores")
@@ -132,15 +130,11 @@ class NetworkChangeReceiver : BroadcastReceiver() {
         val email = inputAsString.split(" ")[0]
         val password = inputAsString.split(" ")[1]
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
+            userID = if (task.isSuccessful) {
                 val user: FirebaseUser? = FirebaseAuth.getInstance().currentUser
-                if (user != null) {
-                    userID = user.uid
-                } else {
-                    userID = "failed"
-                }
+                user?.uid ?: "failed"
             } else {
-                userID = "failed"
+                "failed"
             }
         }.addOnCanceledListener {
             userID = "failed"

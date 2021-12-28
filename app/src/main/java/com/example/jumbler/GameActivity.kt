@@ -22,7 +22,6 @@ import java.util.*
 import java.util.Collections.max
 import java.util.concurrent.Executors
 
-
 class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var word: String = ""
     private var lastWord: String = ""
@@ -33,6 +32,8 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var waitLength: Int = 20
     private var seconds: Int = waitLength
     private var wordListLength: Array<Array<String>> = arrayOf()
+    private var isStartGame: Boolean = false
+    private var correctWord: String = ""
     private val timerText: TextView by lazy { findViewById(R.id.gameTimer) }
     private val playerScore: TextView by lazy { findViewById(R.id.gameScore) }
     private val gameHighScore: TextView by lazy { findViewById(R.id.gameHighScore) }
@@ -40,21 +41,20 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private val textField: EditText by lazy { findViewById(R.id.gameEditText) }
     private val gameWordSolution: TextView by lazy { findViewById(R.id.gameWordSolution) }
     private val gameRemainingChances: TextView by lazy { findViewById(R.id.gameRemainingChances) }
+    private val startGameButton: Button by lazy { findViewById(R.id.buttonPlay) }
+    private val restartGameButton: Button by lazy { findViewById(R.id.buttonRestart) }
+    private val endGameButton: Button by lazy { findViewById(R.id.buttonMenu) }
     private val imm: InputMethodManager by lazy { getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager }
-    private val userID: String by lazy { (this@GameActivity.application as Jumbler).getCurrentUser() }
+    private val userID: String by lazy { (this@GameActivity.application as Jumbler).getCurrentUuid() }
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private val scopeTimer: CoroutineScope = CoroutineScope(CoroutineName("Timer"))
     private val getUser: CoroutineScope = CoroutineScope(CoroutineName("getUser"))
     private val user1: MutableMap<String, Any?> = HashMap()
-    private var isStartGame: Boolean = false
-    private var correctWord: String = ""
-    private var startGameButton: Button? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
         val menu: Button = findViewById(R.id.buttonMenu)
-        startGameButton = findViewById(R.id.playGame)
         menu.setOnClickListener(this)
         val buttonRestart: Button = findViewById(R.id.buttonRestart)
         runOnUiThread {
@@ -74,11 +74,15 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             val inputAsString: String = FileInputStream(file).bufferedReader().use { it.readText() }
             wordListLength += (inputAsString.split(" ") as MutableList<String>).toTypedArray()
         }
-        startGameButton?.setOnClickListener {
+        startGameButton.setOnClickListener {
             startGame()
             isStartGame = true
             runOnUiThread {
-                startGameButton?.visibility = View.INVISIBLE
+                startGameButton.visibility = View.INVISIBLE
+                restartGameButton.isEnabled = true
+                restartGameButton.isClickable = true
+                endGameButton.isEnabled = true
+                endGameButton.isClickable = true
             }
         }
 
@@ -113,7 +117,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun correctProcedure() {
-        if ((this@GameActivity.application as Jumbler).getIsOffline()) {
+        if (!(this@GameActivity.application as Jumbler).isDeviceOnline()) {
             highScore = -2
         }
         correct++
@@ -169,7 +173,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun readDataFromDatabase(word: String): Boolean {
         val letDirectory = File(filesDir, "dictData")
-        //val letter = word.first()
         val file = File(letDirectory, "dictionary.txt")
         val inputAsString: String = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
@@ -227,25 +230,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                                     correctBool = true
                                     Log.e(TAG, "Got it right from dictionary")
                                 }
-//                                val queue: RequestQueue = Volley.newRequestQueue(this@GameActivity)
-//                                val enteredWord: String = textField.text.toString().trim()
-//                                val apiKey: String = getString(R.string.parse_application_id)
-//                                val url =
-//                                    "https://www.dictionaryapi.com/api/v3/references/sd2/json/$enteredWord?key=$apiKey"
-//                                val stringRequest = StringRequest(Request.Method.GET, url,
-//                                    { stringResponse ->
-//                                        Log.e(TAG, stringResponse)
-//                                        if (stringResponse.contains("meta")) {
-//                                            Log.e(TAG, "Guessed a correct word from webster")
-//                                            correctBool = true
-//                                        }
-//                                    },
-//                                    { volleyError ->
-//                                        // handle error
-//                                        Log.e(TAG, "Error in getting word $volleyError")
-//                                    }
-//                                )
-//                                queue.add(stringRequest)
                             }
                         }
                     }
@@ -512,34 +496,36 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val scopeFirebaseAdd = CoroutineScope(CoroutineName("scopeFirebaseAdd"))
         scopeFirebaseAdd.launch(Dispatchers.Default) {
             if (!isOnline()) {
-                val preferencesEmail: SharedPreferences by lazy {
+                val preferences: SharedPreferences by lazy {
                     getSharedPreferences(
-                        "email",
+                        getString(R.string.app_preference_file_key),
                         MODE_PRIVATE
                     )
                 }
-                val preferencesPassword: SharedPreferences by lazy {
-                    getSharedPreferences(
-                        "password",
-                        MODE_PRIVATE
-                    )
-                }
-                val email: String = preferencesEmail.getString("email", "").toString()
-                val password: String = preferencesPassword.getString("password", "").toString()
+                val email: String = preferences.getString("email", "").toString()
+                val password: String = preferences.getString("password", "").toString()
                 if (email != "" && password != "") {
                     val letDirectory = File(filesDir, "scores")
                     val file = File(letDirectory, email)
-                    file.parentFile.mkdirs()
+                    file.parentFile?.mkdirs()
                     if (!file.exists()) {
-                        file.createNewFile()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            runCatching {
+                                file.createNewFile()
+                            }
+                        }
                         File(file.absolutePath).printWriter().use { out ->
                             out.println("$email ")
                             out.println("$password ")
                             out.println("$correct ")
                         }
                     } else {
-                        FileOutputStream(file, true).bufferedWriter().use { writer ->
-                            writer.append("$correct\n ")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            runCatching {
+                                FileOutputStream(file, true).bufferedWriter().use { writer ->
+                                    writer.append("$correct\n ")
+                                }
+                            }
                         }
                     }
                 }
@@ -598,7 +584,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         Log.e(TAG, " seconds after rotate $seconds")
         if (isStartGame) {
             runOnUiThread {
-                startGameButton?.visibility = View.INVISIBLE
+                startGameButton.visibility = View.INVISIBLE
+                restartGameButton.isEnabled = true
+                restartGameButton.isClickable = true
+                endGameButton.isEnabled = true
+                endGameButton.isClickable = true
                 timerText.text = seconds.toString()
                 playerScore.text = getString(R.string.score, correct)
                 scrambledWord.text = randomWordScrambled

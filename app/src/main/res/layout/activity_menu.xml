@@ -1,62 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center">
+    android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/menuAppIcon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:contentDescription="@string/app_name"
-        android:src="@mipmap/ic_launcher_round" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/menuAppIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:contentDescription="@string/app_name"
+            android:src="@mipmap/ic_launcher_round" />
+
+        <TextView
+            android:id="@+id/menuAppTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/menuAppIcon"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/app_name"
+            android:textSize="30sp" />
+
+        <Button
+            android:id="@+id/buttonStart"
+            android:layout_width="190dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/menuAppTitle"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="40dp"
+            android:text="@string/start_game"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/buttonPractice"
+            android:layout_width="190dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonStart"
+            android:layout_centerHorizontal="true"
+            android:text="@string/practice_game"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/buttonLeaderboard"
+            android:layout_width="190dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonPractice"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="@string/leaderboard"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/buttonSettings"
+            android:layout_width="190dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonLeaderboard"
+            android:layout_centerHorizontal="true"
+            android:text="@string/settings_button"
+            android:textAllCaps="false" />
+    </RelativeLayout>
 
     <TextView
-        android:id="@+id/menuAppTitle"
+        android:id="@+id/offlineModeNotice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/menuAppIcon"
+        android:layout_above="@id/buttonReturnToLogin"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:text="@string/app_name"
-        android:textSize="30sp" />
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginBottom="10sp"
+        android:text="@string/offline_mode_notice"
+        android:textAlignment="center"
+        android:textSize="14sp"
+        android:visibility="gone" />
 
     <Button
-        android:id="@+id/buttonStart"
+        android:id="@+id/buttonReturnToLogin"
         android:layout_width="190dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/menuAppTitle"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
-        android:text="@string/start_game"
-        android:textAllCaps="false" />
+        android:layout_marginBottom="20dp"
+        android:text="@string/return_to_login"
+        android:textAllCaps="false"
+        android:visibility="gone" />
 
-    <Button
-        android:id="@+id/buttonPractice"
-        android:layout_width="190dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/buttonStart"
-        android:layout_centerHorizontal="true"
-        android:text="@string/practice_game"
-        android:textAllCaps="false" />
-
-    <Button
-        android:id="@+id/buttonLeaderboard"
-        android:layout_width="190dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/buttonPractice"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:text="@string/leaderboard"
-        android:textAllCaps="false" />
-
-    <Button
-        android:id="@+id/buttonProfile"
-        android:layout_width="190dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/buttonLeaderboard"
-        android:layout_centerHorizontal="true"
-        android:text="@string/settings_button"
-        android:textAllCaps="false" />
 </RelativeLayout>

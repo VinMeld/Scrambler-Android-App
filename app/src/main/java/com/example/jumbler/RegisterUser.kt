@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -77,6 +78,15 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
         if (password.length < 6) {
             editTextPassword.error = getString(R.string.invalid_password)
             editTextPassword.requestFocus()
+            return
+        }
+
+        if (!(this.application as Jumbler).isDeviceOnline()) {
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                getString(R.string.new_account_no_internet),
+                Snackbar.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -217,7 +227,7 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
             }
 
             while (!job1.isCompleted && !finished) {
-                Log.e("ProfileActivity.TAG", "waiting for username to not be null")
+                Log.e("SettingsActivity.TAG", "waiting for username to not be null")
                 delay(1000L)
             }
             Log.e("RegisterUser", "user 1 is not null : $username")

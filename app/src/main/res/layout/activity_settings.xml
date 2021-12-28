@@ -3,14 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ProfileActivity">
+    tools:context=".SettingsActivity">
 
     <RelativeLayout
         android:id="@+id/settingsView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:visibility="gone">
+        android:gravity="center">
 
         <ImageView
             android:id="@+id/settingsIcon"
@@ -98,13 +97,5 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
         android:backgroundTint="@color/red"
-        android:text="@string/delete_account"
-        android:visibility="gone" />
-
-    <ProgressBar
-        android:id="@+id/userProfileProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:visibility="visible" />
+        android:text="@string/delete_account" />
 </RelativeLayout>

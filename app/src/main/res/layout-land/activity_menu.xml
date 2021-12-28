@@ -28,6 +28,19 @@
             android:layout_marginTop="10dp"
             android:text="@string/app_name"
             android:textSize="30sp" />
+
+        <TextView
+            android:id="@+id/offlineModeNotice"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/menuAppTitle"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10sp"
+            android:text="@string/offline_mode_notice"
+            android:textAlignment="center"
+            android:textSize="14sp"
+            android:visibility="gone" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -64,12 +77,23 @@
             android:textAllCaps="false" />
 
         <Button
-            android:id="@+id/buttonProfile"
+            android:id="@+id/buttonSettings"
             android:layout_width="190dp"
             android:layout_height="wrap_content"
             android:layout_below="@id/buttonLeaderboard"
             android:layout_centerHorizontal="true"
             android:text="@string/settings_button"
             android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/buttonReturnToLogin"
+            android:layout_width="190dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/buttonPractice"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="@string/return_to_login"
+            android:textAllCaps="false"
+            android:visibility="gone" />
     </RelativeLayout>
 </RelativeLayout>

@@ -10,8 +10,8 @@
         android:layout_alignParentStart="true"
         android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
-        android:text="@string/loading"
         android:freezesText="true"
+        android:text="@string/loading"
         android:textSize="20sp" />
 
     <TextView
@@ -21,8 +21,8 @@
         android:layout_alignParentEnd="true"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="20dp"
-        android:text="@string/score_placeholder"
         android:freezesText="true"
+        android:text="@string/score_placeholder"
         android:textSize="20sp" />
 
     <TextView
@@ -45,7 +45,6 @@
         android:layout_marginTop="80dp"
         android:freezesText="true"
         android:gravity="center"
-        android:text="@string/press_begin"
         android:textSize="34sp" />
 
     <EditText
@@ -58,9 +57,9 @@
         android:ems="10"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:freezesText="true"
         android:hint="@string/enter_word"
         android:importantForAutofill="no"
-        android:freezesText="true"
         android:inputType="text" />
 
     <TextView
@@ -85,17 +84,18 @@
         android:freezesText="true"
         android:text="@string/attempts_placeholder"
         android:textSize="20sp" />
+
     <Button
-        android:id="@+id/playGame"
+        android:id="@+id/buttonPlay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/gameRemainingChances"
         android:layout_centerHorizontal="true"
-        android:soundEffectsEnabled="false"
         android:layout_marginTop="20dp"
-        android:text="@string/begin"
-        android:textAllCaps="false"
-        />
+        android:soundEffectsEnabled="false"
+        android:text="@string/start_game"
+        android:textAllCaps="false" />
+
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -108,6 +108,8 @@
             android:layout_width="155dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="30dp"
+            android:clickable="false"
+            android:enabled="false"
             android:focusable="false"
             android:soundEffectsEnabled="false"
             android:text="@string/restart_game"
@@ -118,12 +120,13 @@
             android:layout_width="155dp"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/buttonRestart"
+            android:clickable="false"
+            android:enabled="false"
             android:focusable="false"
             android:soundEffectsEnabled="false"
             android:text="@string/end_game"
             android:textAllCaps="false" />
     </RelativeLayout>
-
 
 
 </RelativeLayout>

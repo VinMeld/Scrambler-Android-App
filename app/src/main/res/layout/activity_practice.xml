@@ -31,9 +31,9 @@
         android:layout_below="@id/practiceScore"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="105dp"
+        android:freezesText="true"
         android:text="@string/loading"
-        android:textSize="34sp"
-        android:freezesText="true"/>
+        android:textSize="34sp" />
 
     <EditText
         android:id="@+id/practiceEditText"
@@ -57,9 +57,9 @@
         android:layout_centerHorizontal="true"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="20dp"
+        android:freezesText="true"
         android:textAlignment="center"
-        android:textSize="20sp"
-        android:freezesText="true"/>
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/buttonHint"

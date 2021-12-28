@@ -19,10 +19,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.*
 import java.util.*
 
-class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
+class LeaderboardsActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_personal_leaderboard)
+        setContentView(R.layout.activity_leaderboards)
 
         var leaderboardIsEmpty = false
         val leaderboardTab: TabLayout = findViewById(R.id.leaderboardTabs)
@@ -39,9 +39,8 @@ class PersonalLeaderboardActivity : AppCompatActivity(), View.OnClickListener {
         val scopeLeaderboard = CoroutineScope(CoroutineName("Leaderboard"))
         scopeLeaderboard.launch(Dispatchers.Default) {
             val userID: String =
-                (this@PersonalLeaderboardActivity.application as Jumbler).getCurrentUser()
-            val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-            val user: CollectionReference = db.collection("Users")
+                (this@LeaderboardsActivity.application as Jumbler).getCurrentUuid()
+            val user: CollectionReference = FirebaseFirestore.getInstance().collection("Users")
             val personalLeaderboard: Job = launch {
                 var scores: MutableList<Int>?
                 user.document(userID).get().addOnCompleteListener { task ->

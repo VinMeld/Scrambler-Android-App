@@ -2,12 +2,8 @@ package com.example.jumbler
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -24,36 +20,31 @@ import com.example.jumbler.utils.Jumbler
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.util.concurrent.Executors
 
-
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     private val editTextEmail: EditText by lazy { findViewById(R.id.textEmail1) }
     private val editTextPassword: EditText by lazy { findViewById(R.id.textPassword1) }
-    private val preferencesEmail: SharedPreferences by lazy {
+    private val preferences: SharedPreferences by lazy {
         getSharedPreferences(
-            "email",
-            MODE_PRIVATE
-        )
-    }
-    private val preferencesPassword: SharedPreferences by lazy {
-        getSharedPreferences(
-            "password",
+            getString(R.string.app_preference_file_key),
             MODE_PRIVATE
         )
     }
     private val progressBar: ProgressBar by lazy { findViewById(R.id.progressBar) }
     private val mAuth: FirebaseAuth = FirebaseAuth.getInstance()
-    private lateinit var sqLiteDatabaseObj: SQLiteDatabase
+
     override fun onClick(v: View) {
         when (v.id) {
             R.id.textRegister -> startActivity(Intent(this, RegisterUser::class.java))
             R.id.buttonLogin -> userLogin()
             R.id.textForgot -> startActivity(Intent(this, ForgotPassword::class.java))
+            R.id.buttonOfflineMode -> startActivity(Intent(this, MenuActivity::class.java))
         }
     }
 
@@ -75,6 +66,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             editTextPassword.requestFocus()
             return
         }
+        if (!(this.application as Jumbler).isDeviceOnline()) {
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                getString(R.string.no_internet_login_snackbar),
+                Snackbar.LENGTH_LONG
+            ).show()
+            return
+        }
 
         val dimBackground: LinearLayout = findViewById(R.id.dimBackground)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -94,14 +93,21 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             if (task.isSuccessful) {
                 val user: FirebaseUser? = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
-                    (this.application as Jumbler).setCurrentUser(user.uid)
+                    (this.application as Jumbler).setCurrentUuid(user.uid)
                     if (user.isEmailVerified) {
-                        val editorEmail = preferencesEmail.edit()
-                        editorEmail.putString("email", email)
-                        editorEmail.apply()
-                        val editorPassword = preferencesPassword.edit()
-                        editorPassword.putString("password", password)
-                        editorPassword.apply()
+                        preferences.edit().putString("email", email).apply()
+                        preferences.edit().putString("password", password).apply()
+
+                        val userID: String = (this.application as Jumbler).getCurrentUuid()
+                        FirebaseDatabase.getInstance().getReference("Users").child(userID).get().addOnCompleteListener { retrieval ->
+                            if (retrieval.isSuccessful) {
+                                val username = retrieval.result?.child("username")?.getValue(String::class.java).toString()
+                                preferences.edit().putString("username", username).apply()
+                            } else {
+                                Log.d("TAG", retrieval.exception!!.message!!)
+                            }
+                        }
+
                         startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                     } else {
                         user.sendEmailVerification()
@@ -131,21 +137,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onPause() {
         progressBar.visibility = View.GONE
         super.onPause()
-    }
-
-    private fun isNetworkConnected(): Boolean {
-        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network: Network = cm.activeNetwork ?: return false
-            val activeNetwork = cm.getNetworkCapabilities(network) ?: return false
-            return (activeNetwork.hasTransport(
-                NetworkCapabilities.TRANSPORT_WIFI
-            ) || activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                    || activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-                    || activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH))
-        } else {
-            return cm.activeNetworkInfo != null && cm.activeNetworkInfo!!.isConnected
-        }
     }
 
     private fun generateFileWords(length: Int, file: File) {
@@ -194,7 +185,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         Log.e("TAG", stringResponse)
                         val listOfWords: List<String> = stringResponse.split(",")
                         Log.e("TAG", file.absolutePath)
-                        file.parentFile.mkdirs()
+                        file.parentFile?.mkdirs()
                         file.createNewFile()
                         File(file.absolutePath).printWriter().use { out ->
                             listOfWords.forEach {
@@ -226,14 +217,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        val sharedPreferences: SharedPreferences =
-            this.getSharedPreferences("displayMode", MODE_PRIVATE)
         when {
-            sharedPreferences.getString("displayMode", null) == "light" -> {
+            preferences.getString("displayMode", null) == "light" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             }
-            sharedPreferences.getString("displayMode", null) == "dark" -> {
+            preferences.getString("displayMode", null) == "dark" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
             }
             else -> {
@@ -241,54 +229,32 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
+        val checkbox: String = preferences.getString("remember", "").toString()
+        val email: String = preferences.getString("email", "").toString()
+        val password: String = preferences.getString("password", "").toString()
+
         super.onCreate(savedInstanceState)
-        if (isNetworkConnected()) {
+        if ((this.application as Jumbler).isDeviceOnline()) {
             createFilesAndGenerate()
             createDictionaryDatabase()
-        } else {
-            (this.application as Jumbler).setIsOffline(true)
+        } else if (checkbox == "true" && email != "" && password != "") {
             startActivity(Intent(this@MainActivity, MenuActivity::class.java))
         }
         setContentView(R.layout.activity_main)
-        val loginView: RelativeLayout = findViewById(R.id.loginActivity)
-        val appLaunchProgressView: RelativeLayout = findViewById(R.id.appLaunchProgress)
-        val remember: CheckBox = findViewById(R.id.checkBox)
-        val forgotPassword: TextView = findViewById(R.id.textForgot)
-        forgotPassword.setOnClickListener(this)
-        val register: TextView = findViewById(R.id.textRegister)
-        register.setOnClickListener(this)
-        val signIn: Button = findViewById(R.id.buttonLogin)
-        signIn.setOnClickListener(this)
 
-        val preferences: SharedPreferences = getSharedPreferences("checkbox", MODE_PRIVATE)
-        val checkbox: String = preferences.getString("remember", "").toString()
-        val email: String = preferencesEmail.getString("email", "").toString()
-        val password: String = preferencesPassword.getString("password", "").toString()
+        findViewById<RelativeLayout>(R.id.appLaunchProgress).visibility = View.GONE
+        findViewById<RelativeLayout>(R.id.loginActivity).visibility = View.VISIBLE
+        findViewById<Button>(R.id.buttonOfflineMode).visibility = View.VISIBLE
 
-        if (checkbox == "true" && email != "" && password != "") {
-            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user: FirebaseUser? = FirebaseAuth.getInstance().currentUser
-                    if (user != null) {
-                        (this.application as Jumbler).setCurrentUser(user.uid)
-                        startActivity(Intent(this@MainActivity, MenuActivity::class.java))
-                    }
-                }
-            }
-        } else {
-            appLaunchProgressView.visibility = View.GONE
-            loginView.visibility = View.VISIBLE
-        }
-
-        remember.setOnCheckedChangeListener { buttonView, _ ->
+        findViewById<TextView>(R.id.textForgot).setOnClickListener(this)
+        findViewById<TextView>(R.id.textRegister).setOnClickListener(this)
+        findViewById<Button>(R.id.buttonLogin).setOnClickListener(this)
+        findViewById<Button>(R.id.buttonOfflineMode).setOnClickListener(this)
+        findViewById<CheckBox>(R.id.checkBox).setOnCheckedChangeListener { buttonView, _ ->
             if (buttonView.isChecked) {
-                getSharedPreferences("checkbox", MODE_PRIVATE).edit().putString("remember", "true")
-                    .apply()
+                preferences.edit().putString("remember", "true").apply()
             } else if (!buttonView.isChecked) {
-                val editor: SharedPreferences.Editor =
-                    getSharedPreferences("checkbox", MODE_PRIVATE).edit()
-                editor.putString("remember", "false")
-                editor.apply()
+                preferences.edit().putString("remember", "false").apply()
             }
         }
     }
@@ -296,16 +262,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private fun createDictionaryDatabase() {
         val letDirectory = File(filesDir, "dictData")
         val file = File(letDirectory, "dictionary.txt")
-        file.parentFile.mkdirs()
+        file.parentFile?.mkdirs()
         file.createNewFile()
-        Log.e("TAG", "Creating database");
-        val inputAsString: String = try {
+        Log.e("TAG", "Creating database")
+        var inputAsString: String = try {
             FileInputStream(file).bufferedReader().use { it.readText() }
         } catch (e: FileNotFoundException) {
             ""
         }
         if (inputAsString == "") {
-            Log.e("TAG", "Creating database, string empty");
+            Log.e("TAG", "Creating database, string empty")
             val scopeAddWords = CoroutineScope(CoroutineName("Timer"))
             scopeAddWords.launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                 val queue1: RequestQueue = Volley.newRequestQueue(this@MainActivity)
@@ -313,18 +279,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 val stringRequest1 = StringRequest(
                     Request.Method.GET, url1,
                     { stringResponse ->
-                        Log.e("TAG", "Creating database, request was successful");
-                        Log.e("TAG", stringResponse);
+                        Log.e("TAG", "Creating database, request was successful")
+                        Log.e("TAG", stringResponse)
                         File(file.absolutePath).printWriter().use { out ->
                             out.println(stringResponse)
                         }
-                        val inputAsString: String =
-                            FileInputStream(file).bufferedReader().use { it.readText() }
-                        Log.e("TAG", "Outputing file");
-                        Log.e("TAG", inputAsString);
+                        inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
+                        Log.e("TAG", "Outputting file")
+                        Log.e("TAG", inputAsString)
                     },
                     { volleyError ->
-                        // handle error
                         Log.e("TAG", "Error in getting word $volleyError")
                     }
                 )
@@ -333,24 +297,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-
-    private fun readDataFromDatabase(word: String): Boolean {
-        // val cursorCourses: Cursor = sqLiteDatabaseObj.rawQuery("SELECT $COL_NAME FROM $TABLENAME WHERE $COL_NAME = '$word'", null);
-//        while (cursorCourses.moveToNext()) {
-//            if(cursorCourses.getString(0) == word){
-//                return true;
-//            }
-//            return false;
-//        }
-//        return false;
-        val letDirectory = File(filesDir, "dictData")
-        val file = File(letDirectory, "dictionary.txt")
-        val inputAsString: String = try {
-            FileInputStream(file).bufferedReader().use { it.readText() }
-        } catch (e: FileNotFoundException) {
-            ""
-        }
-        Log.e("TAG", inputAsString)
-        return inputAsString.contains(" $word ")
+    override fun onBackPressed() {
+        moveTaskToBack(true)
     }
 }

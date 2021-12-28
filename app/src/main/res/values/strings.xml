@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Jumbler</string>
+    <string name="app_preference_file_key">com.example.jumbler.PREFERENCE_FILE_KEY</string>
     <string name="cancel">Cancel</string>
     <string name="loading">Loading…</string>
     <string name="dictionary_error">Word dictionary currently unavailable. Please connect to the Internet and restart the app to continue.</string>
@@ -12,7 +13,9 @@
     <string name="log_in_button">Sign In</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="create_account">Create an account</string>
+    <string name="offline_mode">Offline Mode</string>
     <string name="incorrect_login_snackbar">Failed to log in. Please check your credentials and try again.</string>
+    <string name="no_internet_login_snackbar">Failed to log in. Please connect to the Internet and try again.</string>
 
     <!-- Account Creation -->
     <string name="username">Username</string>
@@ -30,12 +33,15 @@
     <string name="username_taken">This username is already taken. Please choose a different one.</string>
     <string name="new_account_success">An account has been successfully created. Open the link sent to your email to verify your account.</string>
     <string name="new_account_fail">Failed to create an account. Please try again.</string>
+    <string name="new_account_no_internet">Failed to create an account. Please connect to the Internet and try again.</string>
 
     <!-- Menu -->
     <string name="start_game">Start Game</string>
     <string name="practice_game">Practice Game</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="settings_button">Settings</string>
+    <string name="return_to_login">Return to Login</string>
+    <string name="offline_mode_notice">High scores are not saved in Offline Mode. In order to view your scores, create or log in to an account once connected to the Internet.</string>
 
     <!-- Game -->
     <string name="enter_word">Enter unscrambled word</string>
@@ -61,7 +67,7 @@
     <string name="personal_leaderboard">Personal</string>
     <string name="global_leaderboard">Global</string>
     <string name="leaderboard_empty">Start playing to record your scores!</string>
-    
+
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="welcome_user">Welcome, %1$s.</string>
@@ -74,6 +80,7 @@
     <string name="sign_out">Sign Out</string>
     <string name="delete_account">Delete Account</string>
     <string name="delete_account_warning">Are you sure you want to delete your account? All leaderboard scores will be permanently lost.</string>
+    <string name="delete_account_no_internet">Failed to delete your account. Please connect to the Internet and try again.</string>
     <string name="return_to_menu">Return to Menu</string>
 
     <!-- Reset Password -->
@@ -82,7 +89,6 @@
     <string name="reset_password_desc">A link will be sent to your email address, allowing you to reset your account password. If you do not see the email, please check your junk or spam folders.</string>
     <string name="reset_password_empty_email">Please enter your email address to reset your password.</string>
     <string name="reset_password_check_email">Open the link sent to your email to reset your password.</string>
-    <string name="reset_password_error">No accounts with this email address currently exist. Please check your input and try again.</string>
-    <string name="begin">Begin!</string>
-    <string name="press_begin">Press Begin!</string>
+    <string name="reset_password_error">No accounts with this email address currently exist. Please check your credentials and try again.</string>
+    <string name="reset_password_no_internet">Failed to reset your password. Please connect to the Internet and try again.</string>
 </resources>

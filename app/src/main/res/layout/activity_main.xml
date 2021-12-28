@@ -96,6 +96,17 @@
         </RelativeLayout>
     </RelativeLayout>
 
+    <Button
+        android:id="@+id/buttonOfflineMode"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:text="@string/offline_mode"
+        android:textAllCaps="false"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/dimBackground"
         android:layout_width="match_parent"
