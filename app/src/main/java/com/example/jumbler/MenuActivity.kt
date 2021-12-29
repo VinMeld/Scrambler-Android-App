@@ -34,7 +34,7 @@ class MenuActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
 
-        if (!(this.application as Jumbler).isDeviceOnline()) {
+        if ((this.application as Jumbler).getIsOfflineMode()) {
             findViewById<Button>(R.id.buttonLeaderboard).visibility = View.GONE
             findViewById<Button>(R.id.buttonSettings).visibility = View.GONE
             findViewById<Button>(R.id.buttonReturnToLogin).visibility = View.VISIBLE
@@ -217,7 +217,7 @@ class MenuActivity : AppCompatActivity() {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
                             Log.e("TAG", document["username"].toString())
-                            val username = document["username"] as String
+                            val username = document["username"].toString()
                             val scores = document["scores"]
                             if (scores != null) {
                                 Log.e("TAG", "Setting user information")
@@ -245,9 +245,10 @@ class MenuActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if ((this.application as Jumbler).isDeviceOnline()) {
+        if (!(this.application as Jumbler).getIsOfflineMode()) {
             moveTaskToBack(true)
         } else {
+            (this.application as Jumbler).setIsOfflineMode(false)
             super.onBackPressed()
         }
     }

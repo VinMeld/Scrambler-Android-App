@@ -44,7 +44,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.textRegister -> startActivity(Intent(this, RegisterUser::class.java))
             R.id.buttonLogin -> userLogin()
             R.id.textForgot -> startActivity(Intent(this, ForgotPassword::class.java))
-            R.id.buttonOfflineMode -> startActivity(Intent(this, MenuActivity::class.java))
+            R.id.buttonOfflineMode -> {
+                (this.application as Jumbler).setIsOfflineMode(true)
+                startActivity(Intent(this, MenuActivity::class.java))
+            }
         }
     }
 
@@ -108,6 +111,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             }
                         }
 
+                        (this.application as Jumbler).setIsOfflineMode(false)
                         startActivity(Intent(this@MainActivity, MenuActivity::class.java))
                     } else {
                         user.sendEmailVerification()
@@ -237,9 +241,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         if ((this.application as Jumbler).isDeviceOnline()) {
             createFilesAndGenerate()
             createDictionaryDatabase()
-        } else if (checkbox == "true" && email != "" && password != "") {
+        }
+
+        if (checkbox == "true" && email != "" && password != "") {
             startActivity(Intent(this@MainActivity, MenuActivity::class.java))
         }
+
         setContentView(R.layout.activity_main)
 
         findViewById<RelativeLayout>(R.id.appLaunchProgress).visibility = View.GONE

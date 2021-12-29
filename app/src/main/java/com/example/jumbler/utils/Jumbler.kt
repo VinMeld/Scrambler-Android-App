@@ -8,6 +8,7 @@ import android.os.Build
 
 class Jumbler : Application() {
     private var currentUuid: String = ""
+    private var isOfflineMode: Boolean = false
 
     fun getCurrentUuid(): String {
         return currentUuid
@@ -15,6 +16,14 @@ class Jumbler : Application() {
 
     fun setCurrentUuid(currentUuid: String) {
         this.currentUuid = currentUuid
+    }
+
+    fun getIsOfflineMode(): Boolean {
+        return isOfflineMode
+    }
+
+    fun setIsOfflineMode(isOfflineMode: Boolean) {
+        this.isOfflineMode = isOfflineMode
     }
 
     fun isDeviceOnline(): Boolean {

@@ -9,103 +9,108 @@
         android:id="@+id/loginActivity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
         android:visibility="gone">
 
-        <ImageView
-            android:id="@+id/mainAppIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:contentDescription="@string/app_name"
-            android:src="@mipmap/ic_launcher_round" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
 
-        <TextView
-            android:id="@+id/mainAppText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/mainAppIcon"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="10dp"
-            android:text="@string/app_name"
-            android:textSize="30sp" />
+            <ImageView
+                android:id="@+id/mainAppIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:contentDescription="@string/app_name"
+                android:src="@mipmap/ic_launcher_round" />
 
-        <EditText
-            android:id="@+id/textEmail1"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/mainAppText"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="40dp"
-            android:autofillHints="emailAddress"
-            android:ems="10"
-            android:hint="@string/email_address"
-            android:inputType="textEmailAddress" />
+            <TextView
+                android:id="@+id/mainAppText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/mainAppIcon"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:text="@string/app_name"
+                android:textSize="30sp" />
 
-        <EditText
-            android:id="@+id/textPassword1"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textEmail1"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="10dp"
-            android:autofillHints="password"
-            android:ems="10"
-            android:hint="@string/password"
-            android:inputType="textPassword" />
+            <EditText
+                android:id="@+id/textEmail1"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/mainAppText"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="40dp"
+                android:autofillHints="emailAddress"
+                android:ems="10"
+                android:hint="@string/email_address"
+                android:inputType="textEmailAddress" />
 
-        <CheckBox
-            android:id="@+id/checkBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textPassword1"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="10dp"
-            android:text="@string/remember_me" />
+            <EditText
+                android:id="@+id/textPassword1"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textEmail1"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:autofillHints="password"
+                android:ems="10"
+                android:hint="@string/password"
+                android:inputType="textPassword" />
+
+            <CheckBox
+                android:id="@+id/checkBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textPassword1"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:text="@string/remember_me" />
+
+            <Button
+                android:id="@+id/buttonLogin"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/checkBox"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:text="@string/log_in_button"
+                android:textAllCaps="false" />
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/buttonLogin"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="30dp">
+
+                <TextView
+                    android:id="@+id/textForgot"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="20dp"
+                    android:text="@string/forgot_password" />
+
+                <TextView
+                    android:id="@+id/textRegister"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@id/textForgot"
+                    android:text="@string/create_account" />
+            </RelativeLayout>
+        </RelativeLayout>
 
         <Button
-            android:id="@+id/buttonLogin"
+            android:id="@+id/buttonOfflineMode"
             android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/checkBox"
+            android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="10dp"
-            android:text="@string/log_in_button"
-            android:textAllCaps="false" />
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/buttonLogin"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="30dp">
-
-            <TextView
-                android:id="@+id/textForgot"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="20dp"
-                android:text="@string/forgot_password" />
-
-            <TextView
-                android:id="@+id/textRegister"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/textForgot"
-                android:text="@string/create_account" />
-        </RelativeLayout>
+            android:layout_marginBottom="20dp"
+            android:text="@string/offline_mode"
+            android:textAllCaps="false"
+            android:visibility="gone" />
     </RelativeLayout>
-
-    <Button
-        android:id="@+id/buttonOfflineMode"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"
-        android:text="@string/offline_mode"
-        android:textAllCaps="false"
-        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/dimBackground"

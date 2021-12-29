@@ -103,7 +103,7 @@ class RegisterUser : AppCompatActivity(), View.OnClickListener {
 
                         if (userSnapShot != null) {
                             for (i in userSnapShot) {
-                                if (i.get("username") as String == username) {
+                                if (i.get("username").toString() == username) {
                                     isUnique = false
                                     Log.e(
                                         "Register User",

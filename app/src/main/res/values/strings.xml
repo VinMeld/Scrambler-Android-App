@@ -67,6 +67,8 @@
     <string name="personal_leaderboard">Personal</string>
     <string name="global_leaderboard">Global</string>
     <string name="leaderboard_empty">Start playing to record your scores!</string>
+    <string name="leaderboard_error">Failed to retrieve leaderboard scores. Please try again later.</string>
+    <string name="leaderboard_offline">Please connect to the Internet to view the leaderboard.</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>

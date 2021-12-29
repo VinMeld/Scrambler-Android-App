@@ -98,7 +98,7 @@ class NetworkChangeReceiver : BroadcastReceiver() {
                 if (userID != "failed") {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
-                            val username = document["username"] as String
+                            val username = document["username"].toString()
                             val scores = document["scores"]
                             if (scores != null) {
                                 Log.e("TAG", "Setting user information")

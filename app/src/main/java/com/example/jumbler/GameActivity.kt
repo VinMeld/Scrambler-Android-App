@@ -416,7 +416,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 if (userID != "") {
                     user.document(userID).get().addOnSuccessListener { document ->
                         if (document != null) {
-                            username = document["username"] as String
+                            username = document["username"].toString()
                             val scores = document["scores"]
                             if (scores != null) {
                                 Log.e(TAG, "Setting user information")
