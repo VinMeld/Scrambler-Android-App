@@ -15,5 +15,5 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
 app/src/main/res/values/secrets.xml
+readme.psd

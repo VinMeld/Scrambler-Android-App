@@ -158,15 +158,15 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         when (randomNumber(1, 3)) {
             1 -> {
                 val randomNum1 = randomNumber(0, wordListLength[first].size)
-                word = wordListLength[first][randomNum1].trim();
+                word = wordListLength[first][randomNum1].trim()
             }
             2 -> {
                 val randomNum1 = randomNumber(0, wordListLength[second].size)
-                word = wordListLength[second][randomNum1].trim();
+                word = wordListLength[second][randomNum1].trim()
             }
             3 -> {
                 val randomNum1 = randomNumber(0, wordListLength[third].size)
-                word = wordListLength[third][randomNum1].trim();
+                word = wordListLength[third][randomNum1].trim()
             }
         }
     }
